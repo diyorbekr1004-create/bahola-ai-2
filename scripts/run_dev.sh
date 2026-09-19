@@ -3,7 +3,7 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
-[ -f .env ] && set -a && . ./.env && set +a
+if [ -f .env ]; then set -a; . <(sed 's/\r$//' .env); set +a; fi   # CRLF bo'lsa ham ishlaydi
 export BACKEND_URL="${BACKEND_URL:-http://localhost:8000}"
 
 if [ -x "$ROOT/.venv/bin/python" ]; then PY="$ROOT/.venv/bin/python"

@@ -124,6 +124,7 @@ python -m pyflakes backend/app frontend scripts
 | `No matching distribution found for python-docx==0.8.12` / `passlib==1.8.2` | Mavjud bo'lmagan/eskirgan pinlar | Joriy faylda `python-docx>=1.1`, `passlib` umuman ishlatilmaydi (stdlib PBKDF2 + PyJWT) |
 | `No module named pytest` | O'rnatish yarmida to'xtagan | `pip install -r backend/requirements.txt` ni qayta bajaring, keyin `cd backend && pytest -q` |
 | Eski `.venv` ichida chalkash paketlar | Bir nechta o'rnatish urinishi | `.venv` papkasini o'chirib `scripts\setup.ps1` ni qayta ishga tushiring |
+| `bash scripts/...sh` hech narsa chiqarmay tugaydi yoki `$'\r': command not found` / `set: pipefail\r: invalid option` | Git for Windows fayllarni CRLF bilan yuklab olgan | `git pull` qiling (`.gitattributes` qo'shilgan), so'ng `git rm -r --cached -q . && git reset -q --hard` — fayllar LF bilan qayta yoziladi; `.env` bo'lsa `sed -i 's/\r$//' .env` |
 | `streamlit` ochilmayapti, «Backend ishlamayapti» | Backend alohida jarayonda ishga tushmagan | Avval `cd backend && uvicorn app.main:app --reload`, keyin Streamlit; yoki `scripts\run_dev.ps1` |
 
 ## Hujjatlar

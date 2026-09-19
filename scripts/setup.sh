@@ -32,7 +32,7 @@ fi
 
 "$VENV_PY" -m pip install --upgrade pip
 "$VENV_PY" -m pip install -r backend/requirements.txt
-[ -f .env ] || cp .env.example .env
+[ -f .env ] || sed 's/\r$//' .env.example > .env
 "$VENV_PY" scripts/seed.py --reset
 (cd backend && "$VENV_PY" -m pytest -q)
 
