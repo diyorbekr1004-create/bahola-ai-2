@@ -43,13 +43,14 @@ def render() -> None:
         st.warning(rep["summary"])
         return
 
-    k1, k2, k3, k4, k5, k6 = st.columns(6)
-    k1.metric("Ishlar", a["total_grades"], f"{a['total_students']} talaba")
+    k1, k2, k3 = st.columns(3)
+    k1.metric("Baholangan ishlar", a["total_grades"], f"{a['total_students']} talaba")
     k2.metric("O'rtacha ball", f"{a['average_score']}%", f"mediana {a['median_score']}%")
     k3.metric("O'zlashtirish", f"{a['pass_rate']}%", f"≥{int(a['thresholds']['pass'])} ball")
+    k4, k5, k6 = st.columns(3)
     k4.metric("Sifat ko'rsatkichi", f"{a['quality_rate']}%", f"≥{int(a['thresholds']['quality'])} ball")
-    k5.metric("Tasdiqlangan", f"{a['confirmed_count']}/{a['total_grades']}", f"{a['pending_count']} kutmoqda")
-    k6.metric("Tejalgan vaqt", f"{a['time_saved_hours']} soat", "qo'lda tekshiruvga nisbatan")
+    k5.metric("Tasdiqlangan", f"{a['confirmed_count']} / {a['total_grades']}", f"{a['pending_count']} kutmoqda")
+    k6.metric("Tejalgan vaqt", f"{a['time_saved_hours']} soat", f"{int(a['time_saved_minutes'])} daqiqa, qo'lda tekshiruvga nisbatan")
 
     st.markdown("#### 📥 Eksport (o'qituvchi qayta qo'lda kiritmaydi)")
     d1, d2, d3, d4 = st.columns(4)
