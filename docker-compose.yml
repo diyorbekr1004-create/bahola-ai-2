@@ -1,28 +1,6 @@
-version: '3.8'
 services:
-  backend:
-    build: .
-    ports:
-      - "8000:8000"
-    volumes:
-      - ./backend/app:/app/app
-    environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/ai_teacher_db
-      - OPENAI_API_KEY=
-      - TEACHER_API_KEY=devkey123
-    depends_on:
-      - db
-  frontend:
-    image: python:3.11-slim
-    working_dir: /srv
-    volumes:
-      - ./frontend:/srv
-      - ./backend:/backend
-    command: sh -c "pip install --no-cache-dir -r /backend/requirements.txt && streamlit run /srv/streamlit_app.py --server.port 8501 --server.headless true"
-    ports:
-      - "8501:8501"
   db:
-    image: postgres:15-alpine
+    image: postgres:16-alpine
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -31,6 +9,45 @@ services:
       - "5432:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/ai_teacher_db
+      LLM_PROVIDER: ${LLM_PROVIDER:-auto}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com/v1}
+      SECRET_KEY: ${SECRET_KEY:-change-me-to-a-long-random-string-at-least-32-chars}
+      AUTH_REQUIRED: ${AUTH_REQUIRED:-false}
+      DEMO_USERS: ${DEMO_USERS:-true}
+      EXPORT_DIR: /app/exports
+      HEMIS_TEMPLATE_PATH: /app/config/hemis_template.json
+    volumes:
+      - exports:/app/exports
+      - ./config:/app/config:ro
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    ports:
+      - "8501:8501"
+    environment:
+      BACKEND_URL: http://backend:8000
+    depends_on:
+      - backend
 
 volumes:
   db_data:
+  exports:

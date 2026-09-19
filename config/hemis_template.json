@@ -1,0 +1,20 @@
+{
+  "_comment": "HEMIS import jadvali ustunlari. `field` — tizimdagi maydon, `header` — Excel sarlavhasi. Oliygoh shabloniga moslab o'zgartiring.",
+  "sheet_name": "Baholar",
+  "date_format": "%d.%m.%Y",
+  "columns": [
+    {"field": "row_number", "header": "№"},
+    {"field": "student_id", "header": "Talaba ID (HEMIS)"},
+    {"field": "student_name", "header": "F.I.Sh."},
+    {"field": "group_name", "header": "Guruh"},
+    {"field": "course", "header": "Fan"},
+    {"field": "topic", "header": "Mavzu / Topshiriq"},
+    {"field": "control_type", "header": "Nazorat turi"},
+    {"field": "score", "header": "Ball (100)"},
+    {"field": "grade_5", "header": "Baho (5)"},
+    {"field": "date", "header": "Sana"},
+    {"field": "teacher", "header": "O'qituvchi"},
+    {"field": "status", "header": "Holat"}
+  ],
+  "status_labels": {"pending": "Tasdiqlanmagan", "confirmed": "Tasdiqlangan", "edited": "Tuzatilgan"}
+}

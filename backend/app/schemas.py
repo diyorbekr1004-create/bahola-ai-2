@@ -1,77 +1,310 @@
-from typing import List, Optional
-from pydantic import BaseModel
+"""API kirish/chiqish sxemalari (Pydantic v2)."""
+from __future__ import annotations
+
+from typing import Any, Dict, List, Optional
+
+from pydantic import BaseModel, Field, field_validator
 
 
+# ---------------------------------------------------------------------------
+# Baholash
+# ---------------------------------------------------------------------------
 class RubricItem(BaseModel):
     name: str
-    max_score: int
-    score: Optional[int] = None
+    max_score: float = Field(gt=0)
+    score: Optional[float] = None
     evidence: Optional[str] = None
+    description: Optional[str] = None
+
+    @field_validator("score")
+    @classmethod
+    def _clamp_score(cls, v, info):
+        if v is None:
+            return v
+        return max(0.0, float(v))
 
 
 class Feedback(BaseModel):
-    summary: str
-    suggestions: List[str]
+    summary: str = ""
+    strengths: List[str] = Field(default_factory=list)
+    errors: List[str] = Field(default_factory=list)
+    suggestions: List[str] = Field(default_factory=list)
+
+
+class IntegrityReport(BaseModel):
+    plagiarism_score: Optional[float] = None
+    ai_likelihood: Optional[float] = None
+    similarity_score: Optional[float] = None
+    similar_to_student: Optional[str] = None
+    reasons: List[str] = Field(default_factory=list)
+    flags: List[str] = Field(default_factory=list)
 
 
 class GradeResponse(BaseModel):
-    total_score: int
-    rubric: List[RubricItem]
-    plagiarism_score: Optional[float] = None
-    ai_likelihood: Optional[float] = None
-    feedback: Feedback
     grade_id: Optional[int] = None
     submission_id: Optional[int] = None
-    confirmed: Optional[bool] = False
+    student_id: Optional[str] = None
+    student_name: Optional[str] = None
+    group_name: Optional[str] = None
+    course: Optional[str] = None
+    topic: Optional[str] = None
+    total_score: float
+    max_score: float = 100.0
+    ai_total_score: Optional[float] = None
+    grade_5: Optional[int] = None
+    rubric: List[RubricItem] = Field(default_factory=list)
+    feedback: Feedback = Field(default_factory=Feedback)
+    integrity: IntegrityReport = Field(default_factory=IntegrityReport)
+    plagiarism_score: Optional[float] = None
+    ai_likelihood: Optional[float] = None
+    status: str = "pending"
+    confirmed: bool = False
+    teacher_id: Optional[str] = None
+    teacher_comment: Optional[str] = None
+    provider: Optional[str] = None
+    processing_ms: Optional[int] = None
+    word_count: Optional[int] = None
+    filename: Optional[str] = None
+    content_preview: Optional[str] = None
+    created_at: Optional[str] = None
     updated_at: Optional[str] = None
 
 
-class GradeSummary(BaseModel):
+class GradeListItem(BaseModel):
     grade_id: int
     submission_id: int
-    student_id: Optional[str]
-    course: Optional[str]
-    total_score: int
-    confirmed: bool
-    updated_at: Optional[str]
+    student_id: Optional[str] = None
+    student_name: Optional[str] = None
+    group_name: Optional[str] = None
+    course: Optional[str] = None
+    topic: Optional[str] = None
+    total_score: float
+    max_score: float = 100.0
+    ai_total_score: Optional[float] = None
+    grade_5: Optional[int] = None
+    status: str = "pending"
+    confirmed: bool = False
+    plagiarism_score: Optional[float] = None
+    ai_likelihood: Optional[float] = None
+    similarity_score: Optional[float] = None
+    teacher_id: Optional[str] = None
+    filename: Optional[str] = None
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
 
 
-class DocRequest(BaseModel):
-    course_name: str
-    hours: int = 60
-    weeks: int = 15
-    language: Optional[str] = "uz"
-    export_format: Optional[str] = None  # 'docx' or None
+class BatchGradeError(BaseModel):
+    filename: str
+    error: str
 
 
-class DocResponse(BaseModel):
-    syllabus: str
-    exam_ticket: str
-    export_path: Optional[str] = None
+class BatchGradeResponse(BaseModel):
+    total: int
+    graded: int
+    failed: int
+    results: List[GradeResponse]
+    errors: List[BatchGradeError] = Field(default_factory=list)
+    processing_ms: int = 0
+
+
+class ConfirmRequest(BaseModel):
+    teacher_id: Optional[str] = None
+    comment: Optional[str] = None
+
+
+class EditGradeRequest(BaseModel):
+    teacher_id: Optional[str] = None
+    corrected_total: Optional[float] = None
+    corrected_rubric: Optional[List[RubricItem]] = None
+    corrected_details: Optional[str] = None  # erkin izoh (eski API bilan moslik)
+    comment: Optional[str] = None
+    confirm: bool = True
+
+
+class ConfirmResponse(BaseModel):
+    success: bool
+    message: Optional[str] = None
+    grade: Optional[GradeResponse] = None
 
 
 class DetectRequest(BaseModel):
     text: str
+    compare_with: Optional[List[str]] = None
 
 
 class DetectResponse(BaseModel):
     plagiarism_score: float
     ai_likelihood: float
+    similarity_score: Optional[float] = None
     reasons: List[str]
+    flags: List[str] = Field(default_factory=list)
 
 
-class EditGradeRequest(BaseModel):
-    teacher_id: str
-    corrected_details: Optional[str]
-    corrected_total: Optional[int]
+# ---------------------------------------------------------------------------
+# Hujjatlar
+# ---------------------------------------------------------------------------
+class DocRequest(BaseModel):
+    course_name: str
+    hours: int = Field(default=60, ge=2, le=1000)
+    weeks: int = Field(default=15, ge=1, le=40)
+    language: str = "uz"
+    level: Optional[str] = None  # bakalavr 1-kurs, magistratura ...
+    doc_types: List[str] = Field(default_factory=lambda: ["syllabus", "lesson_plan", "exam_tickets", "test_questions"])
+    n_tickets: int = Field(default=3, ge=1, le=30)
+    n_questions: int = Field(default=10, ge=1, le=50)
+    topics: Optional[List[str]] = None  # o'qituvchi o'zi mavzular ro'yxatini bersa
+    export_format: Optional[str] = None  # 'docx' yoki None
 
 
-class ConfirmResponse(BaseModel):
-    success: bool
-    message: Optional[str]
+class DocResponse(BaseModel):
+    document_id: Optional[int] = None
+    course_name: str
+    syllabus: str = ""
+    lesson_plan: str = ""
+    exam_ticket: str = ""
+    test_questions: str = ""
+    structured: Dict[str, Any] = Field(default_factory=dict)
+    export_path: Optional[str] = None
+    download_url: Optional[str] = None
+    provider: Optional[str] = None
+    processing_ms: Optional[int] = None
+
+
+class DocumentListItem(BaseModel):
+    id: int
+    doc_type: str
+    course: Optional[str]
+    title: Optional[str]
+    export_path: Optional[str]
+    download_url: Optional[str] = None
+    created_by: Optional[str]
+    created_at: Optional[str]
+
+
+# ---------------------------------------------------------------------------
+# Hisobotlar
+# ---------------------------------------------------------------------------
+class ReportRequest(BaseModel):
+    course_name: Optional[str] = None
+    group_id: Optional[str] = None  # eski nom (moslik uchun)
+    group_name: Optional[str] = None
+    topic: Optional[str] = None
+    only_confirmed: bool = False
+    export_format: Optional[str] = None  # excel | hemis | csv | None
+    control_type: str = "JN"  # HEMIS nazorat turi: JN / ON / YN
+    use_llm_summary: bool = False
+
+    def resolved_group(self) -> Optional[str]:
+        return self.group_name or self.group_id
+
+
+class ReportResponse(BaseModel):
+    summary: str
+    narrative: Optional[str] = None
+    analytics: Dict[str, Any]
+    excel_path: Optional[str] = None
+    download_url: Optional[str] = None
+    hemis_download_url: Optional[str] = None
+    csv_download_url: Optional[str] = None
+    dean_report_url: Optional[str] = None
+
+
+class StatsResponse(BaseModel):
+    total_grades: int
+    pending: int
+    confirmed: int
+    students: int
+    groups: int
+    documents: int
+    average_score: float
+    pass_rate: float
+    quality_rate: float
+    time_saved_hours: float
+    provider: str
+
+
+# ---------------------------------------------------------------------------
+# Talabalar / guruhlar / mezonlar
+# ---------------------------------------------------------------------------
+class StudentIn(BaseModel):
+    student_id: str
+    full_name: Optional[str] = None
+    group_name: Optional[str] = None
+
+
+class StudentOut(StudentIn):
+    id: int
+    created_at: Optional[str] = None
+
+
+class StudentImportResponse(BaseModel):
+    imported: int
+    updated: int
+    groups: List[str]
+    errors: List[str] = Field(default_factory=list)
+
+
+class GroupIn(BaseModel):
+    name: str
+    faculty: Optional[str] = None
+    course_year: Optional[int] = None
+
+
+class GroupOut(GroupIn):
+    id: int
+    student_count: int = 0
+    created_at: Optional[str] = None
+
+
+class RubricTemplateIn(BaseModel):
+    name: str
+    course: Optional[str] = None
+    description: Optional[str] = None
+    items: List[RubricItem]
+    is_default: bool = False
+
+
+class RubricTemplateOut(RubricTemplateIn):
+    id: int
+    created_by: Optional[str] = None
+    created_at: Optional[str] = None
+
+
+class AssignmentIn(BaseModel):
+    title: str
+    course: Optional[str] = None
+    topic: Optional[str] = None
+    group_name: Optional[str] = None
+    rubric_template_id: Optional[int] = None
+    max_score: float = 100.0
+    reference_answer: Optional[str] = None
+
+
+class AssignmentOut(AssignmentIn):
+    id: int
+    created_by: Optional[str] = None
+    created_at: Optional[str] = None
+
+
+# ---------------------------------------------------------------------------
+# Auth / audit / tizim
+# ---------------------------------------------------------------------------
+class UserOut(BaseModel):
+    id: Optional[int] = None
+    username: str
+    full_name: Optional[str] = None
+    role: str = "teacher"
+    is_active: bool = True
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: UserOut
 
 
 class AuditEntry(BaseModel):
+    id: Optional[int] = None
     action: str
     actor: Optional[str]
     target_id: Optional[int]
@@ -79,12 +312,19 @@ class AuditEntry(BaseModel):
     created_at: Optional[str]
 
 
-class ReportRequest(BaseModel):
-    course_name: str
-    group_id: Optional[str] = None
+class HealthResponse(BaseModel):
+    status: str
+    version: str
+    database: str
+    provider: str
 
 
-class ReportResponse(BaseModel):
-    summary: str
-    excel_path: Optional[str] = None
-    analytics: Optional[dict] = None
+class ConfigResponse(BaseModel):
+    app_name: str
+    version: str
+    provider: str
+    model: Optional[str] = None
+    auth_required: bool
+    grade_thresholds: Dict[str, float]
+    minutes_per_manual_check: float
+    max_upload_mb: int

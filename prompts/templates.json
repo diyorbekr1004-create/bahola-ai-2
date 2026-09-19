@@ -1,9 +1,12 @@
 {
   "rubric_default": [
-    {"name": "Dolzarblik", "max_score": 30},
-    {"name": "Dalillar", "max_score": 40},
-    {"name": "Xulosa", "max_score": 30}
+    {"name": "Dolzarblik va mavzuga moslik", "max_score": 20, "description": "Mavzu to'g'ri tushunilgan, maqsad aniq, kirish qismi bor."},
+    {"name": "Dalillar va tahlil", "max_score": 30, "description": "Fikrlar misol, raqam, manba va tahlil bilan asoslangan."},
+    {"name": "Tuzilma va mantiqiy izchillik", "max_score": 20, "description": "Kirish, asosiy qism, xulosa; fikrlar ketma-ket va bog'langan."},
+    {"name": "Til va uslub", "max_score": 15, "description": "Savodxonlik, ilmiy uslub, terminlardan to'g'ri foydalanish."},
+    {"name": "Xulosa", "max_score": 15, "description": "Asosiy natijalar umumlashtirilgan, taklif/tavsiya berilgan."}
   ],
-  "syllabus_template": "{course} — {weeks}-haftalik o'quv rejasi.\n\n{weeks_list}",
-  "exam_template": "Bilet — {course}\n1) Nazariya\n2) Tushuntirish\n3) Amaliy"
+  "grading_system_prompt": "Siz oliy ta'lim o'qituvchisining yordamchisisiz. Talaba ishini rubrika bo'yicha adolatli baholang, har bir ball uchun matndan aniq asos keltiring va xatolarni ro'yxatlang.",
+  "syllabus_prompt": "«{course}» fani uchun {weeks} haftalik, jami {hours} soatlik o'quv rejasi mavzularini mantiqiy ketma-ketlikda tuzing.",
+  "report_prompt": "Statistik ma'lumotlar asosida kafedra mudiri uchun rasmiy tahliliy xulosa yozing: umumiy holat, qiyin mavzular, xavf guruhi, tavsiyalar."
 }

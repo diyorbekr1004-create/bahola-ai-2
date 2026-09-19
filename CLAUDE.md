@@ -1,5 +1,17 @@
 # Claude Code — project context
 
+## Loyiha: AI O'qituvchi Hamkori (Bahola AI)
+
+FastAPI backend (`backend/app`) + Streamlit frontend (`frontend/`). Talaba ishlarini AI bilan baholash (human-in-the-loop),
+o'quv hujjatlarini yaratish, HEMIS/Excel eksport va analitika. Batafsil: `README.md`, `docs/`.
+
+- Ishga tushirish: `pip install -r backend/requirements.txt`, `python scripts/seed.py --reset`, `cd backend && uvicorn app.main:app --reload`, `streamlit run frontend/streamlit_app.py`.
+- Testlar: `cd backend && pytest -q` (testlar `tests/conftest.py` orqali vaqtinchalik SQLite va mock LLM ishlatadi). Lint: `python -m pyflakes backend/app frontend scripts`.
+- LLM: `backend/app/llm.py` fabrikasi; `llm_adapter.py` — oflayn deterministik evristika (testlar shunga tayanadi), `openai_adapter.py` — OpenAI-ga mos API, xatoda mock'ka qaytadi.
+- Baza: SQLModel, `db.init_db()` create_all + `ensure_columns()` (faqat ADD COLUMN). Yangi ustun qo'shganda nullable qiling.
+- Sozlamalar: `backend/app/config.py` (`settings`), `.env.example`.
+- HEMIS ustunlari: `config/hemis_template.json`; standart rubrika: `prompts/templates.json`.
+- UI matnlari o'zbek tilida (lotin). Grafiklar `frontend/ui/theme.py` palitrasi bilan (bitta seriya = ko'k, holat ranglari ikonka+yozuv bilan).
 
 <!-- cloude-code-toolbox:mcp-skills-awareness-begin -->
 
