@@ -44,11 +44,12 @@
       "tagline": "100+ o'qituvchi",
       "limits": {"grades_per_month": null, "documents_per_month": null},
       "features": {"llm": true, "batch": true, "hemis_export": true, "analytics": "dekanat", "shared_rubrics": true, "dean_dashboard": true, "on_premise": true, "support": "SLA 99.5%, shaxsiy menejer"},
-      "highlights": ["Kafedra'dagi hammasi", "Dekanat / fakultet dashboardi", "On-premise (ma'lumot OTM ichida)", "HEMIS/LMS integratsiyasi", "SLA va shaxsiy menejer"]
+      "highlights": ["Kafedra'dagi hammasi", "Dekanat / fakultet dashboardi", "On-premise (ma'lumot OTM ichida)", "HEMIS jadvali eksporti (API integratsiyasi — rejada)", "SLA va shaxsiy menejer"]
     }
   ],
   "addons": [
-    {"name": "integration", "title": "HEMIS / LMS integratsiyasi", "price": 20000000, "unit": "bir martalik (20–50 mln)", "description": "Ustunlarni moslash, ma'lumot ko'chirish, rubrikalarni sozlash, o'qitish"},
+    {"name": "onboarding", "title": "Joriy etish va sozlash", "price": 20000000, "unit": "bir martalik (20–50 mln)", "description": "HEMIS eksport ustunlarini oliygoh shabloniga moslash, ma'lumot ko'chirish, rubrikalarni sozlash, o'qitish"},
+    {"name": "hemis_api", "title": "HEMIS API integratsiyasi (rejalashtirilgan)", "price": null, "unit": "keyingi bosqich", "description": "Baholarni HEMIS'ga to'g'ridan-to'g'ri yuborish — HEMIS API ochilganda qo'shiladi; hozircha tayyor XLSX/CSV jadval orqali import qilinadi"},
     {"name": "training", "title": "Sertifikatli trening", "price": 500000, "unit": "o'qituvchi", "description": "AI bilan baholash va rubrika tuzish bo'yicha 1 kunlik amaliy kurs"},
     {"name": "ministry_analytics", "title": "Vazirlik / hudud analitikasi", "price": null, "unit": "kelishuv asosida", "description": "Respublika kesimida o'zlashtirish va sifat hisobotlari"}
   ],
@@ -58,7 +59,7 @@
     "rows": [
       {"criterion": "O'zbek tilida rubrika bo'yicha baholash", "values": ["✅", "❌", "qisman", "strukturasiz", "❌"]},
       {"criterion": "Har bir ball uchun matndan asos (evidence)", "values": ["✅", "❌", "qisman", "❌", "❌"]},
-      {"criterion": "HEMIS formatida eksport", "values": ["✅", "❌", "❌", "❌", "o'zi"]},
+      {"criterion": "HEMIS formatida eksport (jadval)", "values": ["✅", "❌", "❌", "❌", "o'zi"]},
       {"criterion": "O'qituvchi tasdiqlashi + audit jurnali", "values": ["✅", "—", "✅", "❌", "❌"]},
       {"criterion": "Guruh ichida ko'chirishni aniqlash", "values": ["✅", "✅", "❌", "❌", "❌"]},
       {"criterion": "Kafedra analitikasi (qiyin mavzular, xavf guruhi)", "values": ["✅", "❌", "qisman", "❌", "❌"]},

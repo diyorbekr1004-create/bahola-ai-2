@@ -138,6 +138,11 @@ python -m pyflakes backend/app frontend scripts
 | `bash scripts/...sh` hech narsa chiqarmay tugaydi yoki `$'\r': command not found` / `set: pipefail\r: invalid option` | Git for Windows fayllarni CRLF bilan yuklab olgan | `git pull` qiling (`.gitattributes` qo'shilgan), so'ng `git rm -r --cached -q . && git reset -q --hard` — fayllar LF bilan qayta yoziladi; `.env` bo'lsa `sed -i 's/\r$//' .env` |
 | `streamlit` ochilmayapti, «Backend ishlamayapti» | Backend alohida jarayonda ishga tushmagan | Avval `cd backend && uvicorn app.main:app --reload`, keyin Streamlit; yoki `scripts\run_dev.ps1` |
 
+## Keyingi bosqich (rejalashtirilgan)
+
+- **HEMIS API integratsiyasi** — baholarni HEMIS'ga to'g'ridan-to'g'ri yuborish. Hozircha HEMIS import shakliga mos XLSX/CSV jadval eksporti ishlaydi (`docs/HEMIS_EXPORT.md`); API ochilganda `backend/app/exports.py` dagi `hemis_rows()` natijasi to'g'ridan-to'g'ri yuboriladi.
+- OCR (qo'lyozma ishlar), og'zaki javoblarni baholash (STT), mobil ko'rinish.
+
 ## Hujjatlar
 
 - [docs/PRESENTATION.md](docs/PRESENTATION.md) — xakaton taqdimoti va 3 ta jonli demo ssenariysi

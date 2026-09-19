@@ -64,6 +64,8 @@ def render() -> None:
             except api.APIError as exc:
                 col.caption(f"Yuklab bo'lmadi: {exc}")
 
+    st.caption("HEMIS jadvali tizimning import shakliga mos (`config/hemis_template.json`). To'g'ridan-to'g'ri HEMIS API integratsiyasi — keyingi bosqich (HEMIS API ochilganda qo'shiladi).")
+
     c1, c2 = st.columns(2)
     with c1:
         hist = a.get("histogram") or []

@@ -38,7 +38,7 @@ with st.sidebar:
     with st.spinner("Backend tekshirilmoqda…"):
         ok, state, h = backend_launcher.ensure_backend()
     if ok:
-        st.success(f"Backend: {h['status']} · v{h['version']} · LLM: **{h['provider']}**" + (" · avtomatik ishga tushirildi" if state == "started" else ""))
+        st.success(f"Backend: {h['status']} · v{h['version']} · LLM: **{h['provider']}**" + (f" · avtomatik ishga tushirildi ({st.session_state['backend_url']})" if state == "started" else ""))
     else:
         if state == "remote":
             st.error("Backend javob bermayapti. Manzilni tekshiring yoki serverni ishga tushiring.")

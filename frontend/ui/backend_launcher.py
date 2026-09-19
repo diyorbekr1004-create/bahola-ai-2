@@ -35,10 +35,29 @@ def auto_start_enabled() -> bool:
     return os.getenv("AUTO_START_BACKEND", "true").strip().lower() not in {"0", "false", "no", "off"}
 
 
+def port_free(port: int) -> bool:
+    import socket
+
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.settimeout(0.5)
+        return s.connect_ex(("127.0.0.1", port)) != 0
+
+
+def pick_port(preferred: int) -> int:
+    """Afzal port band bo'lsa (masalan, eski jarayon osilib qolgan), keyingi bo'sh portni tanlaydi."""
+    for port in [preferred] + list(range(preferred + 1, preferred + 20)):
+        if port_free(port):
+            return port
+    return preferred
+
+
 @st.cache_resource(show_spinner=False)
 def _spawn(port: int) -> dict:
     env = os.environ.copy()
     env.setdefault("PYTHONUNBUFFERED", "1")
+    # Windows'da "OpenBLAS: Memory allocation failed" xatosining oldini olish
+    env.setdefault("OPENBLAS_NUM_THREADS", "1")
+    env.setdefault("OMP_NUM_THREADS", "1")
     log = open(LOG_PATH, "ab")
     kwargs = {}
     if os.name == "nt":
@@ -79,7 +98,12 @@ def ensure_backend(wait_seconds: int = 30) -> Tuple[bool, str, Optional[dict]]:
         return False, "remote", None
     if not (BACKEND_DIR / "app" / "main.py").exists():
         return False, "no-backend-dir", None
-    port = urlparse(url).port or 8000
+    preferred = urlparse(url).port or 8000
+    port = pick_port(preferred)
+    if port != preferred:
+        # 8000-port boshqa (javob bermayotgan) jarayon tomonidan band — yangi portga o'tamiz
+        parsed = urlparse(url)
+        st.session_state["backend_url"] = f"{parsed.scheme}://{parsed.hostname}:{port}"
     info = _spawn(port)
     st.session_state.setdefault("_backend_procs", []).append(info["proc"])
     deadline = time.time() + wait_seconds

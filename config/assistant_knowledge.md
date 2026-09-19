@@ -37,7 +37,7 @@ Javob: TXT, MD, DOCX, PDF va ZIP (bir nechta ishni birdaniga). ZIP yoki bir nech
 
 ### Savol: HEMIS eksport qanday qilinadi?
 keywords: hemis, eksport, export, excel, jadval, yuklab olish, csv
-Javob: Hisobotlar tabida fan/guruhni tanlab «Hisobot yaratish» tugmasini bosing, so'ng «HEMIS jadvali (XLSX)» tugmasi bilan faylni yuklab oling. Ustunlar: Talaba ID, F.I.Sh., Guruh, Fan, Nazorat turi (JN/ON/YN), Ball (100), Baho (5), Sana, O'qituvchi, Holat. Ustunlar `config/hemis_template.json` da oliygoh shabloniga moslanadi. HEMIS eksporti Pro tarifidan boshlab.
+Javob: Hisobotlar tabida fan/guruhni tanlab «Hisobot yaratish» tugmasini bosing, so'ng «HEMIS jadvali (XLSX)» tugmasi bilan faylni yuklab oling. Ustunlar: Talaba ID, F.I.Sh., Guruh, Fan, Nazorat turi (JN/ON/YN), Ball (100), Baho (5), Sana, O'qituvchi, Holat. Ustunlar `config/hemis_template.json` da oliygoh shabloniga moslanadi. HEMIS eksporti Pro tarifidan boshlab. To'g'ridan-to'g'ri HEMIS API integratsiyasi hozircha yo'q — keyingi bosqichda qo'shiladi.
 
 ### Savol: AI baholashi adolatlimi? Ishonsa bo'ladimi?
 keywords: adolat, adolatli, ishonch, ishonsa, to'g'ri baholaydimi, xato baholasa, aniqlik
