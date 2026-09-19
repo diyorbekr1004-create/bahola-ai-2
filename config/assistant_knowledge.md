@@ -18,7 +18,7 @@ AI O'qituvchi Hamkori (Bahola AI) — oliy ta'lim o'qituvchilari uchun tizim: ta
 4. Hisobotlar tabida «Hisobot yaratish» → HEMIS jadvalini yuklab oling.
 
 ## AI provayder
-Tizim Google Gemini (GEMINI_API_KEY), OpenAI yoki OpenAI-ga mos server (Groq, Ollama) bilan ishlaydi. Kalit bo'lmasa oflayn deterministik baholash rejimi ishlaydi — tizim hech qachon to'xtamaydi. Provayder yon panelda ko'rsatiladi. Kalit `.env` fayliga yoziladi: GEMINI_API_KEY=... va LLM_PROVIDER=auto.
+Tizim Google Gemini (GEMINI_API_KEY), OpenAI yoki OpenAI-ga mos server (Groq, Ollama) bilan ishlaydi. Kalit bo'lmasa oflayn deterministik baholash rejimi ishlaydi — tizim hech qachon to'xtamaydi. Provayder yon panelda ko'rsatiladi. Kalit yon paneldagi «AI kaliti» bo'limi orqali kiritiladi (u `.env` fayliga yoziladi) yoki qo'lda `.env` ga GEMINI_API_KEY=... yoziladi.
 
 ## Baholash shkalasi
 100 ballik natija 5 ballikka o'tkaziladi: 86–100 → 5, 71–85 → 4, 56–70 → 3, 0–55 → 2 (.env da o'zgartiriladi). O'zlashtirish — 56 va undan yuqori ball olganlar ulushi; sifat ko'rsatkichi — 71 va undan yuqori.

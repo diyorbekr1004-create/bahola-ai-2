@@ -19,6 +19,8 @@ exports/
 backend/exports/
 frontend/exports/
 uploads/
+backend.log
+*.log
 
 # OS / editor
 .DS_Store

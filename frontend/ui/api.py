@@ -46,9 +46,11 @@ def _request(method: str, path: str, *, timeout: float = 120.0, **kwargs) -> htt
     url = f"{backend_url().rstrip('/')}{path}"
     headers = {**auth_headers(), **kwargs.pop("headers", {})}
     try:
-        resp = httpx.request(method, url, headers=headers, timeout=timeout, **kwargs)
+        # trust_env=False: tizim proksi/VPN sozlamalari localhost so'rovlariga xalaqit bermasin
+        with httpx.Client(timeout=timeout, trust_env=False) as client:
+            resp = client.request(method, url, headers=headers, **kwargs)
     except httpx.HTTPError as exc:
-        raise APIError(f"Backend bilan bog'lanib bo'lmadi ({url}): {exc}") from exc
+        raise APIError(f"Backend bilan bog'lanib bo'lmadi ({url}): {exc.__class__.__name__}: {exc}") from exc
     if resp.status_code == 402:
         raise APIError(f"💳 Tarif cheklovi: {_detail(resp)}")
     if resp.status_code >= 400:
@@ -74,9 +76,9 @@ def download(path: str, **params) -> bytes:
     return _request("GET", path, params={k: v for k, v in params.items() if v not in (None, "")}).content
 
 
-def health() -> Optional[dict]:
+def health(timeout: float = 4.0) -> Optional[dict]:
     try:
-        return _request("GET", "/api/health", timeout=5.0).json()
+        return _request("GET", "/api/health", timeout=timeout).json()
     except APIError:
         return None
 

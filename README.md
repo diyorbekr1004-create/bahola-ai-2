@@ -44,12 +44,15 @@ pip install -r backend/requirements.txt
 python scripts/seed.py --reset                        # 30 talaba, 110 baholangan ish, 1 hujjatlar to'plami
 ```
 
-So'ng ikkita terminalda (yoki `make dev` / `scripts\run_dev.ps1`):
+So'ng **bitta buyruq** (Streamlit backendni o'zi ishga tushiradi, log: `backend.log`):
 
 ```bash
-cd backend && uvicorn app.main:app --reload            # API:  http://localhost:8000/docs
-streamlit run frontend/streamlit_app.py               # UI:   http://localhost:8501
+streamlit run frontend/streamlit_app.py               # UI: http://localhost:8501 · API: http://localhost:8000/docs
 ```
+
+Alohida boshqarish uchun: `cd backend && uvicorn app.main:app --reload` + `streamlit run ...` yoki `bash scripts/run_dev.sh`. Avto-ishga tushirishni o'chirish: `AUTO_START_BACKEND=false`.
+
+**Gemini kaliti:** yon paneldagi «🔑 AI kaliti» bo'limiga kalitni qo'ying → «Saqlash» (`.env` ga yoziladi, darhol qo'llanadi) → «Ulanishni tekshirish».
 
 Demo login: `teacher / teacher123` (admin/admin123, dekan/dekan123). `AUTH_REQUIRED=false` (default) rejimida login shart emas.
 
@@ -103,6 +106,7 @@ docs/                        PRESENTATION.md, HEMIS_EXPORT.md, API.md, DEPLOYMEN
 | GET/POST | `/api/rubrics`, `/api/assignments`, `/api/groups`, `/api/students` | ma'lumotnomalar |
 | GET | `/api/stats`, `/api/audit`, `/api/health`, `/api/config` | tizim |
 | POST | `/api/chat`, `GET /api/chat/suggestions` | sayt haqida yordamchi chat |
+| GET/POST | `/api/settings/llm`, `POST /api/settings/llm/test` | AI kalitini `.env` ga yozish, jonli qo'llash, ulanish testi |
 | GET/POST | `/api/plans`, `/api/competitors`, `/api/subscription`, `/api/subscription/{id}/confirm`, `/api/subscription/cancel` | tariflar va obuna (402 — tarif cheklovi) |
 
 ## Sozlamalar (`.env.example`)

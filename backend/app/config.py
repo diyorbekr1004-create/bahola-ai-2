@@ -16,6 +16,22 @@ _ROOT = Path(os.getenv("PROJECT_ROOT") or Path(__file__).resolve().parents[2]).r
 load_dotenv(_ROOT / ".env", override=False)
 
 
+def _normalize_sqlite_url(url: str) -> str:
+    """`sqlite:///./data.db` kabi nisbiy yo'llarni loyiha ildiziga nisbatan mutlaq qiladi.
+
+    Aks holda backend (`backend/` ichida) va skriptlar (ildizda) turli fayllarga yozadi.
+    """
+    prefix = "sqlite:///"
+    if not url.startswith(prefix) or url.startswith("sqlite:////") or url == "sqlite:///:memory:":
+        return url
+    path = url[len(prefix):]
+    if not path or path.startswith(("/", "\\")) or (len(path) > 1 and path[1] == ":"):
+        return url
+    if path.startswith("./"):
+        path = path[2:]
+    return prefix + (_ROOT / path).resolve().as_posix()
+
+
 def _env_bool(name: str, default: bool) -> bool:
     raw = os.getenv(name)
     if raw is None or raw.strip() == "":
@@ -45,7 +61,7 @@ class Settings:
     project_root: Path = _ROOT
 
     # --- Ma'lumotlar bazasi ---
-    database_url: str = field(default_factory=lambda: os.getenv("DATABASE_URL", "sqlite:///./data.db"))
+    database_url: str = field(default_factory=lambda: _normalize_sqlite_url(os.getenv("DATABASE_URL", "sqlite:///./data.db")))
 
     # --- Xavfsizlik ---
     secret_key: str = field(default_factory=lambda: os.getenv("SECRET_KEY", "dev-secret-change-me"))

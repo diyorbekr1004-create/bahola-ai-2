@@ -12,7 +12,7 @@ import streamlit as st
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from ui import api, tab_billing, tab_chat, tab_documents, tab_grading, tab_reports, tab_students  # noqa: E402
+from ui import api, backend_launcher, settings_panel, tab_billing, tab_chat, tab_documents, tab_grading, tab_reports, tab_students  # noqa: E402
 
 st.set_page_config(page_title="AI O'qituvchi Hamkori", page_icon="🎓", layout="wide", initial_sidebar_state="expanded")
 
@@ -35,11 +35,22 @@ with st.sidebar:
     st.markdown("## 🎓 AI O'qituvchi Hamkori")
     st.caption("Tekshirish · Hujjatlar · Hisobotlar — bir joyda")
     st.session_state["backend_url"] = st.text_input("Backend URL", value=st.session_state["backend_url"])
-    h = api.health()
-    if h:
-        st.success(f"Backend: {h['status']} · v{h['version']} · LLM: **{h['provider']}**")
+    with st.spinner("Backend tekshirilmoqda…"):
+        ok, state, h = backend_launcher.ensure_backend()
+    if ok:
+        st.success(f"Backend: {h['status']} · v{h['version']} · LLM: **{h['provider']}**" + (" · avtomatik ishga tushirildi" if state == "started" else ""))
     else:
-        st.error("Backend ishlamayapti. `uvicorn app.main:app --reload` (backend/ ichida) ni ishga tushiring.")
+        if state == "remote":
+            st.error("Backend javob bermayapti. Manzilni tekshiring yoki serverni ishga tushiring.")
+        else:
+            st.error("Backend ishga tushmadi. Quyidagi logni ko'ring; qo'lda: `cd backend && uvicorn app.main:app`")
+            log = backend_launcher.tail_log()
+            if log:
+                st.code(log, language="text")
+            if st.button("🔄 Qayta urinish", key="backend_retry"):
+                backend_launcher.restart()
+                st.rerun()
+    settings_panel.render()
 
     st.markdown("### 👤 O'qituvchi")
     if st.session_state["token"]:
