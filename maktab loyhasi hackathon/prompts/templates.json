@@ -1,0 +1,9 @@
+{
+  "rubric_default": [
+    {"name": "Dolzarblik", "max_score": 30},
+    {"name": "Dalillar", "max_score": 40},
+    {"name": "Xulosa", "max_score": 30}
+  ],
+  "syllabus_template": "{course} — {weeks}-haftalik o'quv rejasi.\n\n{weeks_list}",
+  "exam_template": "Bilet — {course}\n1) Nazariya\n2) Tushuntirish\n3) Amaliy"
+}
