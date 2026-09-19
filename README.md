@@ -28,9 +28,11 @@ powershell -ExecutionPolicy Bypass -File scripts\setup.ps1
 ```
 
 ```bash
-# Linux / macOS
+# Linux / macOS / Windows Git Bash
 bash scripts/setup.sh
 ```
+
+> Windows'da terminal **Git Bash** bo'lsa (`bash:` bilan boshlanadigan xabarlar), PowerShell buyruqlari (`Remove-Item`, `scripts\...`) ishlamaydi — `bash scripts/setup.sh` dan foydalaning va yo'llarda `/` yozing.
 
 Yoki qo'lda:
 
