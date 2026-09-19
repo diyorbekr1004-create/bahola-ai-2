@@ -12,7 +12,7 @@ import streamlit as st
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from ui import api, tab_billing, tab_documents, tab_grading, tab_reports, tab_students  # noqa: E402
+from ui import api, tab_billing, tab_chat, tab_documents, tab_grading, tab_reports, tab_students  # noqa: E402
 
 st.set_page_config(page_title="AI O'qituvchi Hamkori", page_icon="🎓", layout="wide", initial_sidebar_state="expanded")
 
@@ -88,7 +88,7 @@ with st.sidebar:
 st.title("AI O'qituvchi Hamkori")
 st.caption("Talaba ishlarini AI bilan tekshiring, o'zingiz tasdiqlang, HEMIS uchun eksport qiling — haftalik 15–20 soat o'rniga 1–2 soat.")
 
-tabs = st.tabs(["🔎 Tekshirish", "📄 Hujjatlar", "📊 Hisobotlar", "👥 Talabalar", "💳 Tariflar"])
+tabs = st.tabs(["🔎 Tekshirish", "📄 Hujjatlar", "📊 Hisobotlar", "👥 Talabalar", "💳 Tariflar", "💬 Yordamchi"])
 with tabs[0]:
     tab_grading.render()
 with tabs[1]:
@@ -99,3 +99,5 @@ with tabs[3]:
     tab_students.render()
 with tabs[4]:
     tab_billing.render()
+with tabs[5]:
+    tab_chat.render()

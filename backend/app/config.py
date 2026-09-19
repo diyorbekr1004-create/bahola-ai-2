@@ -56,8 +56,11 @@ class Settings:
     demo_users: bool = field(default_factory=lambda: _env_bool("DEMO_USERS", True))
 
     # --- LLM provayder ---
-    # LLM_PROVIDER: auto | mock | openai
+    # LLM_PROVIDER: auto | mock | gemini | openai  (auto: Gemini kaliti bo'lsa Gemini, keyin OpenAI, aks holda oflayn)
     llm_provider: str = field(default_factory=lambda: os.getenv("LLM_PROVIDER", "auto").strip().lower())
+    gemini_api_key: str = field(default_factory=lambda: os.getenv("GEMINI_API_KEY", "").strip())
+    gemini_model: str = field(default_factory=lambda: os.getenv("GEMINI_MODEL", "gemini-2.5-flash").strip())
+    gemini_base_url: str = field(default_factory=lambda: os.getenv("GEMINI_BASE_URL", "https://generativelanguage.googleapis.com/v1beta").rstrip("/"))
     openai_api_key: str = field(default_factory=lambda: os.getenv("OPENAI_API_KEY", "").strip())
     openai_model: str = field(default_factory=lambda: os.getenv("OPENAI_MODEL", "gpt-4o-mini").strip())
     # OpenAI-ga mos har qanday server (Groq, OpenRouter, Ollama, Azure OpenAI gateway ...)

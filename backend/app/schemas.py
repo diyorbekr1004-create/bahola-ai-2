@@ -383,3 +383,23 @@ class SubscriptionRequest(BaseModel):
     months: int = Field(default=1, ge=1, le=36)
     payment_method: Optional[str] = None
     organization: Optional[str] = None
+
+
+# ---------------------------------------------------------------------------
+# Yordamchi chat
+# ---------------------------------------------------------------------------
+class ChatMessage(BaseModel):
+    role: str = Field(pattern="^(user|assistant|system)$")
+    content: str = Field(min_length=1, max_length=6000)
+
+
+class ChatRequest(BaseModel):
+    messages: List[ChatMessage] = Field(min_length=1, max_length=40)
+
+
+class ChatResponse(BaseModel):
+    answer: str
+    provider: str
+    model: Optional[str] = None
+    suggestions: List[str] = Field(default_factory=list)
+    offline: bool = False

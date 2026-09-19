@@ -361,3 +361,10 @@ class MockLLMAdapter:
         from .analytics import build_narrative
 
         return build_narrative(analytics, course=course, group=group)
+
+    async def chat(self, messages: Sequence[dict], *, system: Optional[str] = None, **_: Any) -> str:
+        """Oflayn yordamchi: bilimlar bazasidagi FAQ bo'yicha javob."""
+        from .assistant_kb import offline_answer
+
+        last_user = next((m.get("content", "") for m in reversed(list(messages)) if m.get("role") == "user"), "")
+        return offline_answer(str(last_user))

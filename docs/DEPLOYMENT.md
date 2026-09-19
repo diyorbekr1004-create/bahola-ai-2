@@ -23,7 +23,7 @@ make dev         # yoki: scripts/run_dev.sh, Windows: scripts\run_dev.ps1
 
 - [ ] `DATABASE_URL` — boshqariladigan PostgreSQL (Azure Database for PostgreSQL, Cloud SQL, RDS).
 - [ ] `SECRET_KEY` — kamida 32 belgili tasodifiy satr; `AUTH_REQUIRED=true`; `DEMO_USERS=false`.
-- [ ] `OPENAI_API_KEY` maxfiy saqlanadi (Key Vault / Secrets Manager), `LLM_PROVIDER=openai`.
+- [ ] `GEMINI_API_KEY` (yoki `OPENAI_API_KEY`) maxfiy saqlanadi (Key Vault / Secrets Manager), `LLM_PROVIDER=auto`.
 - [ ] HTTPS (reverse proxy: nginx / Caddy / App Service TLS).
 - [ ] `EXPORT_DIR` uchun doimiy disk va tozalash siyosati (masalan, 30 kundan eski fayllarni o'chirish).
 - [ ] Bazani zaxiralash (kunlik) va audit jurnalini saqlash muddati.

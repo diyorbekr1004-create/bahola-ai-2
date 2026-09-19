@@ -13,9 +13,10 @@ O'qituvchining haftalik 15–20 soatlik tekshirish va qog'oz to'ldirish vaqtini 
 | 📄 **Hujjatlar** | Fan nomi → **15 haftalik silabus** (soatlar, nazoratlar, adabiyotlar) · **dars rejasi** (80 daq. bosqichlar) · **imtihon biletlari** (N variant) · **test savollari** (4 variant, javoblar kaliti) · hammasi bitta **DOCX** faylda |
 | 📊 **Hisobotlar** | Guruh bo'yicha **o'zlashtirish** va **sifat ko'rsatkichi** · 5 ballik taqsimot · **qiyin mavzular** va **qiyin mezonlar** reytingi · guruhlar taqqoslash · **xavf guruhi** · AI ↔ o'qituvchi mosligi · tejalgan vaqt · **kafedra mudiri / dekanat uchun tahliliy xulosa** · eksport: **HEMIS XLSX**, to'liq Excel (5 varaq), CSV, dekanat DOCX |
 | 👥 **Talabalar** | HEMIS ro'yxatini XLSX/CSV import · guruhlar · rubrika shablonlari |
+| 💬 **Yordamchi** | Sayt haqida AI chat: baholash, HEMIS eksport, tariflar, sozlamalar bo'yicha savol-javob (`config/assistant_knowledge.md` bilimlar bazasi); Gemini/OpenAI bo'lsa erkin suhbat, bo'lmasa oflayn FAQ |
 | 💳 **Tariflar** | Free / Pro / Kafedra / Universitet rejalari (`config/pricing.json`) · oylik limitlar va funksiya cheklovlari (LLM, batch, HEMIS eksport) · obuna va to'lov so'rovi (hisob-faktura, Payme/Click/Uzum/bank) · ROI kalkulyator · raqobatchilar bilan taqqoslash va ustunliklar |
 
-Barcha natijalar **yagona bazada** (SQLite default, PostgreSQL bir qatorda) saqlanadi. LLM ulanmagan bo'lsa ham tizim **to'liq oflayn** ishlaydi (deterministik evristik baholash); `OPENAI_API_KEY` berilsa OpenAI (yoki OpenAI-ga mos har qanday server: Groq, OpenRouter, Ollama) ishlatiladi va xato bo'lsa avtomatik oflayn rejimga qaytadi.
+Barcha natijalar **yagona bazada** (SQLite default, PostgreSQL bir qatorda) saqlanadi. Tekshirish **Google Gemini** orqali ishlaydi (`GEMINI_API_KEY`); zaxira sifatida OpenAI yoki OpenAI-ga mos server (Groq, OpenRouter, Ollama) ulanadi. Kalit bo'lmasa yoki API xato bersa tizim **to'liq oflayn** ishlaydi (deterministik evristik baholash) — namoyish hech qachon to'xtamaydi.
 
 ## Tez boshlash
 
@@ -64,11 +65,13 @@ docker compose up --build       # PostgreSQL + backend (8000) + frontend (8501)
 ```
 backend/app/
   main.py               FastAPI ilova (lifespan: baza, demo userlar, standart rubrika)
+  llm_base.py / gemini_adapter.py / openai_adapter.py   provayderlar (Gemini asosiy), JSON-rejim, oflaynga qaytish
+  assistant_kb.py       yordamchi chat bilimlar bazasi (config/assistant_knowledge.md) va oflayn FAQ
   config.py             .env sozlamalari (shkala, chegaralar, provayder)
   db.py                 SQLModel modellari + yengil migratsiya (ADD COLUMN)
   schemas.py            Pydantic v2 sxemalar
   security.py           PBKDF2 parol, JWT, rollar, demo rejim
-  llm.py / llm_adapter.py / openai_adapter.py   provayder fabrikasi, oflayn evristika, OpenAI (JSON mode)
+  llm.py / llm_adapter.py   provayder fabrikasi, oflayn deterministik evristika
   content_bank.py       fan mavzulari banki, silabus/bilet/test/dars rejasi quruvchilar
   plagiarism_detector.py plagiat, AI-matn, guruh ichidagi o'xshashlik
   file_parser.py        TXT/DOCX/PDF/ZIP/XLSX/CSV
@@ -99,12 +102,13 @@ docs/                        PRESENTATION.md, HEMIS_EXPORT.md, API.md, DEPLOYMEN
 | POST | `/api/students/import` | HEMIS ro'yxati (XLSX/CSV) |
 | GET/POST | `/api/rubrics`, `/api/assignments`, `/api/groups`, `/api/students` | ma'lumotnomalar |
 | GET | `/api/stats`, `/api/audit`, `/api/health`, `/api/config` | tizim |
+| POST | `/api/chat`, `GET /api/chat/suggestions` | sayt haqida yordamchi chat |
 | GET/POST | `/api/plans`, `/api/competitors`, `/api/subscription`, `/api/subscription/{id}/confirm`, `/api/subscription/cancel` | tariflar va obuna (402 — tarif cheklovi) |
 
 ## Sozlamalar (`.env.example`)
 
 - `DATABASE_URL` — `sqlite:///./data.db` yoki `postgresql://...`
-- `LLM_PROVIDER` — `auto` / `mock` / `openai`; `OPENAI_API_KEY`, `OPENAI_MODEL`, `OPENAI_BASE_URL`
+- `LLM_PROVIDER` — `auto` / `gemini` / `openai` / `mock`; `GEMINI_API_KEY`, `GEMINI_MODEL` (default `gemini-2.5-flash`); `OPENAI_API_KEY`, `OPENAI_MODEL`, `OPENAI_BASE_URL`
 - `AUTH_REQUIRED` — `true` bo'lsa JWT majburiy; `SECRET_KEY` ni albatta almashtiring
 - `GRADE_5_MIN / GRADE_4_MIN / GRADE_3_MIN` — 100→5 ballik shkala (default 86/71/56)
 - `MINUTES_PER_MANUAL_CHECK` — "tejalgan vaqt" hisobi uchun (default 12 daqiqa/ish)
