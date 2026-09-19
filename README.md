@@ -13,6 +13,7 @@ O'qituvchining haftalik 15–20 soatlik tekshirish va qog'oz to'ldirish vaqtini 
 | 📄 **Hujjatlar** | Fan nomi → **15 haftalik silabus** (soatlar, nazoratlar, adabiyotlar) · **dars rejasi** (80 daq. bosqichlar) · **imtihon biletlari** (N variant) · **test savollari** (4 variant, javoblar kaliti) · hammasi bitta **DOCX** faylda |
 | 📊 **Hisobotlar** | Guruh bo'yicha **o'zlashtirish** va **sifat ko'rsatkichi** · 5 ballik taqsimot · **qiyin mavzular** va **qiyin mezonlar** reytingi · guruhlar taqqoslash · **xavf guruhi** · AI ↔ o'qituvchi mosligi · tejalgan vaqt · **kafedra mudiri / dekanat uchun tahliliy xulosa** · eksport: **HEMIS XLSX**, to'liq Excel (5 varaq), CSV, dekanat DOCX |
 | 👥 **Talabalar** | HEMIS ro'yxatini XLSX/CSV import · guruhlar · rubrika shablonlari |
+| 💳 **Tariflar** | Free / Pro / Kafedra / Universitet rejalari (`config/pricing.json`) · oylik limitlar va funksiya cheklovlari (LLM, batch, HEMIS eksport) · obuna va to'lov so'rovi (hisob-faktura, Payme/Click/Uzum/bank) · ROI kalkulyator · raqobatchilar bilan taqqoslash va ustunliklar |
 
 Barcha natijalar **yagona bazada** (SQLite default, PostgreSQL bir qatorda) saqlanadi. LLM ulanmagan bo'lsa ham tizim **to'liq oflayn** ishlaydi (deterministik evristik baholash); `OPENAI_API_KEY` berilsa OpenAI (yoki OpenAI-ga mos har qanday server: Groq, OpenRouter, Ollama) ishlatiladi va xato bo'lsa avtomatik oflayn rejimga qaytadi.
 
@@ -98,6 +99,7 @@ docs/                        PRESENTATION.md, HEMIS_EXPORT.md, API.md, DEPLOYMEN
 | POST | `/api/students/import` | HEMIS ro'yxati (XLSX/CSV) |
 | GET/POST | `/api/rubrics`, `/api/assignments`, `/api/groups`, `/api/students` | ma'lumotnomalar |
 | GET | `/api/stats`, `/api/audit`, `/api/health`, `/api/config` | tizim |
+| GET/POST | `/api/plans`, `/api/competitors`, `/api/subscription`, `/api/subscription/{id}/confirm`, `/api/subscription/cancel` | tariflar va obuna (402 — tarif cheklovi) |
 
 ## Sozlamalar (`.env.example`)
 
@@ -107,6 +109,7 @@ docs/                        PRESENTATION.md, HEMIS_EXPORT.md, API.md, DEPLOYMEN
 - `GRADE_5_MIN / GRADE_4_MIN / GRADE_3_MIN` — 100→5 ballik shkala (default 86/71/56)
 - `MINUTES_PER_MANUAL_CHECK` — "tejalgan vaqt" hisobi uchun (default 12 daqiqa/ish)
 - `HEMIS_TEMPLATE_PATH` — HEMIS ustunlari shabloni
+- `DEFAULT_PLAN` (demo foydalanuvchi tarifi), `PLAN_ENFORCEMENT`, `DEMO_PAYMENTS` — tariflar; narxlar `config/pricing.json` da
 
 ## Testlar
 

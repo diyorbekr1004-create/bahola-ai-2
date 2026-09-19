@@ -111,6 +111,7 @@ async def grade_content(
     filename: Optional[str] = None,
     language: str = "uz",
     actor: Optional[str] = None,
+    llm=None,
 ) -> GradeResponse:
     content = (content or "").strip()
     if not content:
@@ -137,7 +138,7 @@ async def grade_content(
         group_name = student.group_name
 
     compare_with = _comparison_set(session, course=course, topic=topic, group_name=group_name, student_id=student_id)
-    llm = get_llm()
+    llm = llm or get_llm()
     result = await llm.grade_submission(content, rubric, reference_answer=reference_answer, topic=topic, course=course, language=language, compare_with=compare_with)
 
     scored: List[RubricItem] = [r if isinstance(r, RubricItem) else RubricItem(**r) for r in result["rubric"]]
@@ -166,7 +167,7 @@ async def grade_content(
         submission_id=sub.id, total_score=total, max_score=max_total, ai_total_score=total, details=dumps(details),
         feedback_summary=feedback.summary, plagiarism_score=integrity.get("plagiarism_score"), ai_likelihood=integrity.get("ai_likelihood"),
         similarity_score=integrity.get("similarity_score"), similar_to_student=integrity.get("similar_to"),
-        status="pending", confirmed=False, processing_ms=processing_ms, provider=result.get("provider"),
+        status="pending", confirmed=False, processing_ms=processing_ms, provider=result.get("provider"), created_by=actor,
     )
     session.add(gr)
     session.commit()

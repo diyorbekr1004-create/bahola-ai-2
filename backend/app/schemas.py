@@ -202,6 +202,8 @@ class ReportResponse(BaseModel):
     summary: str
     narrative: Optional[str] = None
     analytics: Dict[str, Any]
+    locked_features: List[str] = Field(default_factory=list)
+    upgrade_hint: Optional[str] = None
     excel_path: Optional[str] = None
     download_url: Optional[str] = None
     hemis_download_url: Optional[str] = None
@@ -294,6 +296,7 @@ class UserOut(BaseModel):
     username: str
     full_name: Optional[str] = None
     role: str = "teacher"
+    plan: str = "free"
     is_active: bool = True
 
 
@@ -328,3 +331,55 @@ class ConfigResponse(BaseModel):
     grade_thresholds: Dict[str, float]
     minutes_per_manual_check: float
     max_upload_mb: int
+
+
+# ---------------------------------------------------------------------------
+# Tariflar / obuna
+# ---------------------------------------------------------------------------
+class UsageOut(BaseModel):
+    grades_used: int = 0
+    grades_limit: Optional[int] = None
+    grades_remaining: Optional[int] = None
+    documents_used: int = 0
+    documents_limit: Optional[int] = None
+    documents_remaining: Optional[int] = None
+    period_start: Optional[str] = None
+
+
+class SubscriptionOut(BaseModel):
+    id: int
+    username: str
+    plan: str
+    seats: int
+    months: int
+    amount: int
+    currency: str = "so'm"
+    payment_method: Optional[str] = None
+    invoice_no: Optional[str] = None
+    status: str
+    started_at: Optional[str] = None
+    expires_at: Optional[str] = None
+    note: Optional[str] = None
+    created_at: Optional[str] = None
+
+
+class SubscriptionStatus(BaseModel):
+    username: str
+    plan: str
+    plan_title: str
+    features: Dict[str, Any]
+    limits: Dict[str, Any]
+    usage: UsageOut
+    subscription: Optional[SubscriptionOut] = None
+    pending: Optional[SubscriptionOut] = None
+    enforcement: bool = True
+    demo_payments: bool = True
+    is_demo_user: bool = False
+
+
+class SubscriptionRequest(BaseModel):
+    plan: str
+    seats: int = Field(default=1, ge=1, le=100000)
+    months: int = Field(default=1, ge=1, le=36)
+    payment_method: Optional[str] = None
+    organization: Optional[str] = None

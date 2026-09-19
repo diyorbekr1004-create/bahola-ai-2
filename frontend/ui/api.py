@@ -49,6 +49,8 @@ def _request(method: str, path: str, *, timeout: float = 120.0, **kwargs) -> htt
         resp = httpx.request(method, url, headers=headers, timeout=timeout, **kwargs)
     except httpx.HTTPError as exc:
         raise APIError(f"Backend bilan bog'lanib bo'lmadi ({url}): {exc}") from exc
+    if resp.status_code == 402:
+        raise APIError(f"💳 Tarif cheklovi: {_detail(resp)}")
     if resp.status_code >= 400:
         raise APIError(f"{resp.status_code}: {_detail(resp)}")
     return resp

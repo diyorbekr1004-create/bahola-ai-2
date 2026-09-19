@@ -43,6 +43,8 @@ class User(SQLModel, table=True):
     hashed_password: str
     full_name: Optional[str] = None
     role: str = Field(default="teacher")  # teacher | admin | dean
+    plan: str = Field(default="free")     # free | pro | kafedra | universitet
+    organization: Optional[str] = None
     is_active: bool = True
     created_at: datetime = Field(default_factory=utcnow)
 
@@ -135,6 +137,7 @@ class GradeRecord(SQLModel, table=True):
     corrected_details: Optional[str] = None  # JSON: o'qituvchi tuzatgan mezonlar
     processing_ms: Optional[int] = None
     provider: Optional[str] = None
+    created_by: Optional[str] = Field(default=None, index=True)  # tarif limitlari uchun
     created_at: datetime = Field(default_factory=utcnow)
     updated_at: datetime = Field(default_factory=utcnow)
 
@@ -163,6 +166,26 @@ class GeneratedDocument(SQLModel, table=True):
     export_path: Optional[str] = None
     created_by: Optional[str] = None
     created_at: datetime = Field(default_factory=utcnow)
+
+
+class Subscription(SQLModel, table=True):
+    """Tarif obunasi va to'lov so'rovi."""
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    username: str = Field(index=True)
+    plan: str
+    seats: int = 1
+    months: int = 1
+    amount: int = 0                      # so'm
+    currency: str = "so'm"
+    payment_method: Optional[str] = None
+    invoice_no: Optional[str] = None
+    status: str = Field(default="pending")  # pending | active | cancelled | expired
+    started_at: Optional[datetime] = None
+    expires_at: Optional[datetime] = None
+    note: Optional[str] = None
+    created_at: datetime = Field(default_factory=utcnow)
+    updated_at: datetime = Field(default_factory=utcnow)
 
 
 # ---------------------------------------------------------------------------

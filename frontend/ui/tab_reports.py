@@ -53,6 +53,8 @@ def render() -> None:
     k6.metric("Tejalgan vaqt", f"{a['time_saved_hours']} soat", f"{int(a['time_saved_minutes'])} daqiqa, qo'lda tekshiruvga nisbatan")
 
     st.markdown("#### 📥 Eksport (o'qituvchi qayta qo'lda kiritmaydi)")
+    if rep.get("locked_features"):
+        st.warning(rep.get("upgrade_hint") or "Ba'zi eksportlar joriy tarifda mavjud emas.")
     d1, d2, d3, d4 = st.columns(4)
     for col, label, url_key in ((d1, "🏛️ HEMIS jadvali (XLSX)", "hemis_download_url"), (d2, "📊 To'liq Excel hisobot", "download_url"), (d3, "🧾 CSV (HEMIS ustunlari)", "csv_download_url"), (d4, "📝 Dekanat uchun DOCX", "dean_report_url")):
         url = rep.get(url_key)

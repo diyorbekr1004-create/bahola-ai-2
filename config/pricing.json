@@ -1,0 +1,78 @@
+{
+  "_comment": "Tariflar, qo'shimcha xizmatlar va raqobat jadvali. Narxlar so'mda. Limit null = cheksiz.",
+  "currency": "so'm",
+  "plans": [
+    {
+      "name": "free",
+      "title": "Bepul",
+      "price_per_seat": 0,
+      "billing": "oy",
+      "min_seats": 1,
+      "tagline": "Sinab ko'rish uchun",
+      "limits": {"grades_per_month": 30, "documents_per_month": 3},
+      "features": {"llm": false, "batch": false, "hemis_export": false, "analytics": "asosiy", "shared_rubrics": false, "dean_dashboard": false, "on_premise": false, "support": "hamjamiyat"},
+      "highlights": ["30 ta ish/oy (oflayn baholash)", "3 ta hujjat to'plami/oy", "Asosiy hisobot", "Talabaga fikr-mulohaza (DOCX)"]
+    },
+    {
+      "name": "pro",
+      "title": "Pro",
+      "price_per_seat": 59000,
+      "billing": "oy",
+      "min_seats": 1,
+      "tagline": "Yakka o'qituvchi uchun",
+      "limits": {"grades_per_month": null, "documents_per_month": null},
+      "features": {"llm": true, "batch": true, "hemis_export": true, "analytics": "to'liq", "shared_rubrics": false, "dean_dashboard": false, "on_premise": false, "support": "email, 24 soat"},
+      "highlights": ["Cheksiz tekshirish", "AI (LLM) bilan chuqur asoslar", "ZIP/batch yuklash", "HEMIS / Excel / CSV eksport", "To'liq analitika va xulosa"]
+    },
+    {
+      "name": "kafedra",
+      "title": "Kafedra",
+      "price_per_seat": 30000,
+      "billing": "oy",
+      "min_seats": 20,
+      "tagline": "20–99 o'qituvchi",
+      "limits": {"grades_per_month": null, "documents_per_month": null},
+      "features": {"llm": true, "batch": true, "hemis_export": true, "analytics": "kafedra", "shared_rubrics": true, "dean_dashboard": false, "on_premise": false, "support": "ustuvor, 8 soat"},
+      "highlights": ["Pro'dagi hammasi", "Umumiy rubrika shablonlari", "Kafedra bo'yicha analitika", "Guruh ichida o'xshashlik nazorati", "O'qituvchilar uchun trening"]
+    },
+    {
+      "name": "universitet",
+      "title": "Universitet",
+      "price_per_seat": 25000,
+      "billing": "oy (yillik shartnoma)",
+      "min_seats": 100,
+      "tagline": "100+ o'qituvchi",
+      "limits": {"grades_per_month": null, "documents_per_month": null},
+      "features": {"llm": true, "batch": true, "hemis_export": true, "analytics": "dekanat", "shared_rubrics": true, "dean_dashboard": true, "on_premise": true, "support": "SLA 99.5%, shaxsiy menejer"},
+      "highlights": ["Kafedra'dagi hammasi", "Dekanat / fakultet dashboardi", "On-premise (ma'lumot OTM ichida)", "HEMIS/LMS integratsiyasi", "SLA va shaxsiy menejer"]
+    }
+  ],
+  "addons": [
+    {"name": "integration", "title": "HEMIS / LMS integratsiyasi", "price": 20000000, "unit": "bir martalik (20–50 mln)", "description": "Ustunlarni moslash, ma'lumot ko'chirish, rubrikalarni sozlash, o'qitish"},
+    {"name": "training", "title": "Sertifikatli trening", "price": 500000, "unit": "o'qituvchi", "description": "AI bilan baholash va rubrika tuzish bo'yicha 1 kunlik amaliy kurs"},
+    {"name": "ministry_analytics", "title": "Vazirlik / hudud analitikasi", "price": null, "unit": "kelishuv asosida", "description": "Respublika kesimida o'zlashtirish va sifat hisobotlari"}
+  ],
+  "payment_methods": ["Payme", "Click", "Uzum", "Bank hisob-faktura"],
+  "competitors": {
+    "columns": ["Bahola AI", "Turnitin", "Gradescope", "ChatGPT (qo'lda)", "HEMIS"],
+    "rows": [
+      {"criterion": "O'zbek tilida rubrika bo'yicha baholash", "values": ["✅", "❌", "qisman", "strukturasiz", "❌"]},
+      {"criterion": "Har bir ball uchun matndan asos (evidence)", "values": ["✅", "❌", "qisman", "❌", "❌"]},
+      {"criterion": "HEMIS formatida eksport", "values": ["✅", "❌", "❌", "❌", "o'zi"]},
+      {"criterion": "O'qituvchi tasdiqlashi + audit jurnali", "values": ["✅", "—", "✅", "❌", "❌"]},
+      {"criterion": "Guruh ichida ko'chirishni aniqlash", "values": ["✅", "✅", "❌", "❌", "❌"]},
+      {"criterion": "Kafedra analitikasi (qiyin mavzular, xavf guruhi)", "values": ["✅", "❌", "qisman", "❌", "❌"]},
+      {"criterion": "Silabus / bilet / test generatori", "values": ["✅", "❌", "❌", "qisman", "❌"]},
+      {"criterion": "Oflayn rejim, ma'lumot OTM ichida", "values": ["✅", "❌", "❌", "❌", "✅"]},
+      {"criterion": "Narx (o'qituvchi / oy)", "values": ["25–59 ming so'm", "$$$ (talaba/yil)", "$$$", "$20", "—"]}
+    ]
+  },
+  "advantages": [
+    {"title": "O'zbek tili va HEMIS", "text": "Rubrika, fikr-mulohaza va eksport — O'zbekiston OTM formatida. Xalqaro vositalar buni bermaydi."},
+    {"title": "AI taklif qiladi, o'qituvchi qaror qiladi", "text": "Har bir ball uchun asos, tasdiqlash/tuzatish va audit jurnali. AI ↔ o'qituvchi farqi o'lchanadi."},
+    {"title": "Ko'chirishni guruh ichida topadi", "text": "Kim kimdan ko'chirgani ko'rsatiladi — xalqaro bazasiz, mahalliy ishlar bo'yicha."},
+    {"title": "Ma'lumotlar OTM ichida", "text": "On-premise va oflayn rejim: talaba ishlari tashqariga chiqmaydi — Shaxsiy ma'lumotlar qonuniga mos."},
+    {"title": "10 barobar arzon", "text": "Bitta ishni tekshirish ≈ 10 so'm; o'qituvchi uchun oyiga 25–59 ming so'm — ChatGPT obunasidan 4 barobar arzon."},
+    {"title": "Bitta oqim: tekshirish → HEMIS → analitika", "text": "Raqobatchilar bittasini qiladi; biz o'qituvchining butun haftalik ishini yopamiz."}
+  ]
+}

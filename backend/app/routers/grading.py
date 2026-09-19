@@ -15,7 +15,7 @@ from ..file_parser import UnsupportedFileError, extract_text, is_zip, iter_zip_f
 from ..plagiarism_detector import analyze_text
 from ..schemas import BatchGradeError, BatchGradeResponse, ConfirmRequest, ConfirmResponse, DetectRequest, DetectResponse, EditGradeRequest, GradeListItem, GradeResponse
 from ..security import actor_name, get_current_user
-from ..services import grading as svc
+from ..services import billing, grading as svc
 
 router = APIRouter(prefix="/api", tags=["grading"])
 
@@ -57,10 +57,11 @@ async def grade_endpoint(
         filename = file.filename
         if not student_id:
             student_id = student_id_from_filename(file.filename)
+    billing.check_quota(session, user, 1)
     return await svc.grade_content(
         session, content=content, student_id=student_id, student_name=student_name, group_name=group_name, course=course, topic=topic,
         assignment_id=assignment_id, rubric_json=rubric, rubric_template_id=rubric_template_id, reference_answer=reference_answer,
-        filename=filename, language=language, actor=actor_name(user),
+        filename=filename, language=language, actor=actor_name(user), llm=billing.llm_for(user),
     )
 
 
@@ -80,6 +81,7 @@ async def grade_batch(
 ):
     """Bir nechta fayl yoki ZIP arxiv — har bir fayl alohida talaba ishi (student_id fayl nomidan olinadi)."""
     started = time.perf_counter()
+    billing.require_feature(user, "batch", "Batch (ZIP / bir nechta fayl) yuklash")
     items: List[tuple[str, bytes]] = []
     for f in files:
         raw = await _read_upload(f)
@@ -89,6 +91,8 @@ async def grade_batch(
             items.append((f.filename or "file.txt", raw))
     if len(items) > config.settings.max_batch_files:
         raise HTTPException(status_code=413, detail=f"Bir vaqtda maks. {config.settings.max_batch_files} ta fayl")
+    billing.check_quota(session, user, len(items))
+    llm = billing.llm_for(user)
 
     results: List[GradeResponse] = []
     errors: List[BatchGradeError] = []
@@ -98,7 +102,7 @@ async def grade_batch(
             res = await svc.grade_content(
                 session, content=content, student_id=student_id_from_filename(name), group_name=group_name, course=course, topic=topic,
                 assignment_id=assignment_id, rubric_json=rubric, rubric_template_id=rubric_template_id, reference_answer=reference_answer,
-                filename=name, language=language, actor=actor_name(user),
+                filename=name, language=language, actor=actor_name(user), llm=llm,
             )
             results.append(res)
         except HTTPException as exc:

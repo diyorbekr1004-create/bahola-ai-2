@@ -83,6 +83,14 @@ class Settings:
     ai_flag_threshold: float = field(default_factory=lambda: _env_float("AI_FLAG_THRESHOLD", 0.6))
     similarity_flag_threshold: float = field(default_factory=lambda: _env_float("SIMILARITY_FLAG_THRESHOLD", 0.6))
 
+    # --- Tariflar / to'lov ---
+    # Tizimga kirmagan (demo) foydalanuvchining tarifi
+    default_plan: str = field(default_factory=lambda: os.getenv("DEFAULT_PLAN", "universitet").strip().lower())
+    # Limitlar va funksiya cheklovlarini qo'llash
+    plan_enforcement: bool = field(default_factory=lambda: _env_bool("PLAN_ENFORCEMENT", True))
+    # true: obuna so'rovini egasining o'zi "to'lov qildim" deb tasdiqlashi mumkin (demo); false: faqat admin
+    demo_payments: bool = field(default_factory=lambda: _env_bool("DEMO_PAYMENTS", True))
+
     # --- Fayl cheklovlari ---
     max_upload_mb: int = field(default_factory=lambda: _env_int("MAX_UPLOAD_MB", 10))
     max_batch_files: int = field(default_factory=lambda: _env_int("MAX_BATCH_FILES", 100))

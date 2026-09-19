@@ -17,7 +17,7 @@ from sqlmodel import Session, select
 
 from . import config
 from .db import RubricTemplate, dumps, engine, init_db
-from .routers import auth, documents, grading, reports, rubrics, students, system
+from .routers import auth, billing, documents, grading, reports, rubrics, students, system
 from .security import ensure_demo_users
 from .services.grading import default_rubric_items
 
@@ -59,7 +59,7 @@ app = FastAPI(
 
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
-for r in (system.router, auth.router, grading.router, documents.router, reports.router, students.router, rubrics.router):
+for r in (system.router, auth.router, grading.router, documents.router, reports.router, students.router, rubrics.router, billing.router):
     app.include_router(r)
 
 

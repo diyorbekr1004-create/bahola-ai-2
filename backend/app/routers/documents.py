@@ -11,7 +11,7 @@ from sqlmodel import Session
 from ..db import GeneratedDocument, get_session
 from ..schemas import DocRequest, DocResponse, DocumentListItem
 from ..security import actor_name, get_current_user
-from ..services import documents as svc
+from ..services import billing, documents as svc
 
 router = APIRouter(prefix="/api", tags=["documents"])
 
@@ -19,6 +19,7 @@ router = APIRouter(prefix="/api", tags=["documents"])
 @router.post("/generate-docs", response_model=DocResponse)
 async def generate_docs(req: DocRequest, session: Session = Depends(get_session), user=Depends(get_current_user)):
     """Fan nomi -> 15 haftalik silabus, dars rejasi, imtihon biletlari va testlar (DOCX bilan)."""
+    billing.check_document_quota(session, user)
     return await svc.generate_documents(session, req, actor=actor_name(user))
 
 

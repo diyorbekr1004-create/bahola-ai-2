@@ -27,9 +27,10 @@ PBKDF2_ITERATIONS = 200_000
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token", auto_error=False)
 
 DEMO_USERS = [
-    ("teacher", "teacher123", "Demo O'qituvchi", "teacher"),
-    ("admin", "admin123", "Kafedra mudiri", "admin"),
-    ("dekan", "dekan123", "Dekanat", "dean"),
+    # username, parol, ism, rol, tarif
+    ("teacher", "teacher123", "Demo O'qituvchi", "teacher", "free"),
+    ("admin", "admin123", "Kafedra mudiri", "admin", "universitet"),
+    ("dekan", "dekan123", "Dekanat", "dean", "universitet"),
 ]
 
 
@@ -85,13 +86,13 @@ def get_user_by_username(username: str) -> Optional[User]:
         return s.exec(select(User).where(User.username == username)).first()
 
 
-def create_user(username: str, password: str, full_name: Optional[str] = None, role: str = "teacher") -> User:
+def create_user(username: str, password: str, full_name: Optional[str] = None, role: str = "teacher", plan: str = "free") -> User:
     init_db()
     with Session(engine) as s:
         existing = s.exec(select(User).where(User.username == username)).first()
         if existing:
             return existing
-        u = User(username=username, hashed_password=hash_password(password), full_name=full_name, role=role)
+        u = User(username=username, hashed_password=hash_password(password), full_name=full_name, role=role, plan=plan)
         s.add(u)
         s.commit()
         s.refresh(u)
@@ -101,12 +102,19 @@ def create_user(username: str, password: str, full_name: Optional[str] = None, r
 def ensure_demo_users() -> None:
     if not config.settings.demo_users:
         return
-    for username, password, full_name, role in DEMO_USERS:
-        create_user(username, password, full_name=full_name, role=role)
+    for username, password, full_name, role, plan in DEMO_USERS:
+        u = create_user(username, password, full_name=full_name, role=role, plan=plan)
+        if not u.plan:  # eski bazadan kelgan foydalanuvchi: tarif ustuni bo'sh
+            with Session(engine) as s:
+                db_user = s.get(User, u.id)
+                if db_user:
+                    db_user.plan = plan
+                    s.add(db_user)
+                    s.commit()
 
 
 def demo_user() -> User:
-    return User(id=None, username="demo", hashed_password="", full_name="Demo O'qituvchi", role="teacher", is_active=True)
+    return User(id=None, username="demo", hashed_password="", full_name="Demo O'qituvchi", role="teacher", plan=config.settings.default_plan, is_active=True)
 
 
 # ---------------------------------------------------------------------------

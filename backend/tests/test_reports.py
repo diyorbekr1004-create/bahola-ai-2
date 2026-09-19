@@ -44,7 +44,9 @@ def test_reports_analytics_and_exports(client, good_text, weak_text, auth_header
 
 
 def test_reports_export_endpoint_direct(client, auth_headers):
-    r = client.get("/api/reports/export", params={"format": "hemis", "course": "Hisobot fani"}, headers=auth_headers)
+    # teacher (Free tarif) uchun HEMIS eksporti yopiq, demo (Universitet) uchun ochiq
+    assert client.get("/api/reports/export", params={"format": "hemis", "course": "Hisobot fani"}, headers=auth_headers).status_code == 402
+    r = client.get("/api/reports/export", params={"format": "hemis", "course": "Hisobot fani"})
     assert r.status_code == 200
     assert r.headers["content-type"].startswith("application/vnd.openxmlformats")
     r2 = client.get("/api/reports/export", params={"format": "csv", "course": "Hisobot fani"})

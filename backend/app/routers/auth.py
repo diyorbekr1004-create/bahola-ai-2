@@ -11,7 +11,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 def _user_out(u) -> UserOut:
-    return UserOut(id=u.id, username=u.username, full_name=u.full_name, role=u.role, is_active=u.is_active)
+    return UserOut(id=u.id, username=u.username, full_name=u.full_name, role=u.role, plan=getattr(u, 'plan', 'free') or 'free', is_active=u.is_active)
 
 
 @router.post("/token", response_model=TokenResponse)

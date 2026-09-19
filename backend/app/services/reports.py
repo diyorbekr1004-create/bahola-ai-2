@@ -18,7 +18,7 @@ def _url(path: Optional[Path | str]) -> Optional[str]:
     return f"/api/exports/{Path(path).name}" if path else None
 
 
-async def build_report(session: Session, req: ReportRequest, actor: Optional[str] = None) -> ReportResponse:
+async def build_report(session: Session, req: ReportRequest, actor: Optional[str] = None, hemis_allowed: bool = True) -> ReportResponse:
     group = req.resolved_group()
     rows = grade_rows(session, course=req.course_name, group_name=group, topic=req.topic, only_confirmed=req.only_confirmed)
     analytics = compute_analytics(rows)
@@ -31,8 +31,12 @@ async def build_report(session: Session, req: ReportRequest, actor: Optional[str
     summary = short_summary(analytics, req.course_name, group)
 
     excel_path = hemis_path = csv_path = dean_path = None
+    locked: list[str] = []
     if rows:
         fmt = (req.export_format or "").lower()
+        if not hemis_allowed and fmt in ("hemis", "csv", "dean", "docx", "all"):
+            locked.append("hemis_export")
+            fmt = "excel"
         try:
             if fmt in ("", "excel", "all"):
                 excel_path = write_grades_excel(rows, analytics, course_name=req.course_name, group_id=group)
@@ -51,6 +55,7 @@ async def build_report(session: Session, req: ReportRequest, actor: Optional[str
         summary=summary, narrative=narrative, analytics=analytics,
         excel_path=str(excel_path) if excel_path else None, download_url=_url(excel_path),
         hemis_download_url=_url(hemis_path), csv_download_url=_url(csv_path), dean_report_url=_url(dean_path),
+        locked_features=locked, upgrade_hint="HEMIS / CSV / dekanat eksporti Pro tarifidan boshlab mavjud — «Tariflar» bo'limiga o'ting." if locked else None,
     )
 
 
