@@ -130,6 +130,9 @@ python -m pyflakes backend/app frontend scripts
 ## Hujjatlar
 
 - [docs/PRESENTATION.md](docs/PRESENTATION.md) — xakaton taqdimoti va 3 ta jonli demo ssenariysi
+- [docs/HAKAMLAR_MEZONLARI.md](docs/HAKAMLAR_MEZONLARI.md) — texnik / biznes / soha mentorlari mezonlari bo'yicha javoblar
+- [docs/BIZNES_MODEL.md](docs/BIZNES_MODEL.md) — bozor, tariflar, unit-ekonomika, raqobat, 3 yillik prognoz, risklar
+- [docs/SLIDES_PROMPT.md](docs/SLIDES_PROMPT.md) — slayd generatori uchun tayyor prompt (skrinshotlar `docs/img/`)
 - [docs/HEMIS_EXPORT.md](docs/HEMIS_EXPORT.md) — HEMIS jadvali formati va moslashtirish
 - [docs/API.md](docs/API.md) — endpointlar va misollar
 - [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) — Docker, Postgres, Azure/Streamlit Cloud
