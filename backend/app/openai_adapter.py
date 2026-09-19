@@ -1,85 +1,46 @@
-import os
+"""OpenAI-ga mos (chat/completions) provayder adapteri.
+
+`OPENAI_BASE_URL` orqali OpenAI, Azure OpenAI gateway, Groq, OpenRouter,
+Ollama (`http://localhost:11434/v1`) kabi har qanday mos serverga ulanadi.
+"""
+from __future__ import annotations
+
+import logging
+from typing import Any, Dict, List, Optional
+
 import httpx
-from typing import List
-from .schemas import RubricItem, Feedback
-import json
+
+from .llm_base import ChatLLMAdapter
+
+log = logging.getLogger("bahola.openai")
 
 
-class OpenAIAdapter:
-    def __init__(self, api_key: str = None, model: str = None):
-        self.api_key = api_key or os.getenv("OPENAI_API_KEY")
-        self.model = model or os.getenv("OPENAI_MODEL", "gpt-4o")
-        self.url = "https://api.openai.com/v1/chat/completions"
+class OpenAIAdapter(ChatLLMAdapter):
+    name = "openai"
 
-    async def _call(self, messages, temperature=0.0, max_tokens=800):
+    def __init__(self, api_key: Optional[str] = None, model: Optional[str] = None, base_url: Optional[str] = None, timeout: float = 60.0):
+        super().__init__()
+        from .config import settings
+
+        self.api_key = api_key or settings.openai_api_key
+        self.model = model or settings.openai_model
+        self.base_url = (base_url or settings.openai_base_url).rstrip("/")
+        self.timeout = timeout or settings.llm_timeout_seconds
+
+    async def _complete(self, messages: List[dict], *, temperature: float = 0.1, max_tokens: int = 2500, json_mode: bool = True) -> Optional[str]:
         headers = {"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"}
-        payload = {"model": self.model, "messages": messages, "temperature": temperature, "max_tokens": max_tokens}
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            r = await client.post(self.url, headers=headers, json=payload)
-            r.raise_for_status()
-            return r.json()
-
-    async def grade_submission(self, text: str, rubric: List[RubricItem]):
-        # Build prompt that requests strict JSON output
-        rubric_desc = [{"name": r.name, "max_score": r.max_score} for r in rubric]
-        system = (
-            "You are an education-assistant that grades student submissions. "
-            "Return ONLY valid JSON following this schema: {total_score:int, rubric:[{name:str, max_score:int, score:int, evidence:str}], plagiarism_score:float, ai_likelihood:float, feedback:{summary:str, suggestions:[str]}}."
-        )
-        user = (
-            f"Rubric: {json.dumps(rubric_desc)}\n\n" +
-            f"Student submission:\n{text}\n\n" +
-            "Give scores for each rubric item and brief evidence lines."
-        )
-
-        resp = await self._call([{"role": "system", "content": system}, {"role": "user", "content": user}])
+        payload: Dict[str, Any] = {"model": self.model, "messages": messages, "temperature": temperature, "max_tokens": max_tokens}
+        if json_mode:
+            payload["response_format"] = {"type": "json_object"}
         try:
-            content = resp["choices"][0]["message"]["content"]
-            parsed = json.loads(content)
-            # Map to objects similar to mock
-            return parsed
-        except Exception as e:
-            # If parsing fails, fallback to a simple mock
-            from .llm_adapter import LLMAdapter
-
-            mock = LLMAdapter()
-            return await mock.grade_submission(text, rubric)
-
-    async def generate_docs(self, course_name: str, hours: int = 60, weeks: int = 15):
-        system = "You produce a syllabus and an exam ticket. Respond as JSON: {syllabus:str, exam_ticket:str}."
-        user = f"Create a {weeks}-week syllabus for {course_name} totaling {hours} hours. Output JSON only."
-        resp = await self._call([{"role": "system", "content": system}, {"role": "user", "content": user}])
-        try:
-            content = resp["choices"][0]["message"]["content"]
-            return json.loads(content)
-        except Exception:
-            # fallback
-            weeks_list = "\n".join([f"Hafta {i}: Mavzu {i}" for i in range(1, weeks + 1)])
-            return {"syllabus": f"{course_name} — {weeks}-haftalik o'quv rejasi.\n\n{weeks_list}", "exam_ticket": f"Bilet — {course_name}\n1) Nazariya\n2) Tushuntirish\n3) Amaliy"}
-
-    async def generate_report(self, course_name: str, group_id: str = None):
-        system = "Produce a short analytical summary for administration. Respond JSON: {summary:str, excel_path:null, analytics:{average_score:float, pass_rate:float, quality_rate:float, weak_topics:[{topic:str, average_score:float, difficulty:float}]}}."
-        user = f"Create an admin summary for {course_name} (group {group_id})."
-        resp = await self._call([{"role": "system", "content": system}, {"role": "user", "content": user}])
-        try:
-            content = resp["choices"][0]["message"]["content"]
-            result = json.loads(content)
-            if "analytics" not in result:
-                result["analytics"] = {
-                    "average_score": 78.0,
-                    "pass_rate": 82.0,
-                    "quality_rate": 64.0,
-                    "weak_topics": [{"topic": "Mavzu 3", "average_score": 68.0, "difficulty": 32.0}],
-                }
-            return result
-        except Exception:
-            return {
-                "summary": f"Guruh: {group_id or 'Barcha'} — {course_name}: O'rtacha 78%.",
-                "excel_path": None,
-                "analytics": {
-                    "average_score": 78.0,
-                    "pass_rate": 82.0,
-                    "quality_rate": 64.0,
-                    "weak_topics": [{"topic": "Mavzu 3", "average_score": 68.0, "difficulty": 32.0}],
-                },
-            }
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                r = await client.post(f"{self.base_url}/chat/completions", headers=headers, json=payload)
+                if r.status_code == 400 and json_mode:
+                    payload.pop("response_format", None)  # ba'zi serverlar response_format'ni qo'llamaydi
+                    r = await client.post(f"{self.base_url}/chat/completions", headers=headers, json=payload)
+                r.raise_for_status()
+                return r.json()["choices"][0]["message"]["content"]
+        except Exception as exc:  # noqa: BLE001
+            self.last_error = str(exc)
+            log.warning("OpenAI so'rovi muvaffaqiyatsiz: %s", exc)
+            return None

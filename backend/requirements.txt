@@ -1,18 +1,27 @@
-fastapi==0.100.0
-uvicorn[standard]==0.22.0
-sqlmodel==0.0.8
-python-multipart==0.0.6
-aiofiles==23.1.0
-httpx==0.24.1
-pydantic==1.10.13
-python-dotenv==1.0.0
-pandas==2.2.2
-openpyxl==3.1.2
-python-docx==1.1.2
-openai==1.0.0
-streamlit==1.25.0
-pytest==7.4.0
-pytest-asyncio==0.22.0
-passlib[bcrypt]==1.7.4
-python-jose==3.3.0
-alembic==1.11.1
+# Python 3.11 - 3.14 (tavsiya: 3.12). Barcha paketlar Windows/Linux/macOS uchun tayyor wheel bilan keladi,
+# C++ build toolchain (Visual Studio / vswhere.exe) KERAK EMAS. Aniq pin o'rniga mos diapazonlar ishlatilgan.
+# O'rnatish: pip install -r backend/requirements.txt   (yoki scripts/setup.ps1 / scripts/setup.sh)
+
+# --- Backend (FastAPI) ---
+fastapi>=0.115,<1.0
+uvicorn[standard]>=0.30,<1.0
+sqlmodel>=0.0.22,<0.1
+pydantic>=2.8,<3.0
+python-multipart>=0.0.12
+httpx>=0.27,<1.0
+python-dotenv>=1.0
+PyJWT>=2.9,<3.0
+
+# --- Data / exports ---
+pandas>=2.2,<3.0
+openpyxl>=3.1,<4.0
+python-docx>=1.1,<2.0
+pypdf>=5.0,<6.0
+
+# --- Frontend (Streamlit) ---
+streamlit>=1.46,<2.0
+plotly>=5.24,<7.0
+
+# --- Tests ---
+pytest>=8.3,<9.0
+pytest-asyncio>=0.24,<1.0

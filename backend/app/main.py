@@ -1,298 +1,74 @@
-from fastapi import FastAPI, UploadFile, File, Form, Depends
+"""AI O'qituvchi Hamkori — FastAPI backend.
+
+Uchta asosiy oqim:
+  1. Tekshirish  — /api/grade, /api/grade/batch, tasdiqlash/tuzatish (human-in-the-loop)
+  2. Hujjatlar   — /api/generate-docs (silabus, dars rejasi, biletlar, testlar, DOCX)
+  3. Hisobotlar  — /api/reports, /api/reports/export (Excel, HEMIS, CSV, dekanat DOCX)
+"""
+from __future__ import annotations
+
+import logging
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from typing import List
-from .schemas import RubricItem, Feedback, GradeResponse, DocRequest, DocResponse, ReportRequest, ReportResponse
-import os
-from .llm_adapter import LLMAdapter
-from .openai_adapter import OpenAIAdapter
-from .db import init_db, engine, Submission, GradeRecord, AuditLog
-from .plagiarism_detector import analyze_text
-from .schemas import DetectRequest, DetectResponse, EditGradeRequest, ConfirmResponse, AuditEntry
-from .utils import write_syllabus_docx, write_grades_excel
-from .auth_jwt import router as auth_router, get_current_active_user
-import json
+from fastapi.responses import JSONResponse
 from sqlmodel import Session, select
 
+from . import config
+from .db import RubricTemplate, dumps, engine, init_db
+from .routers import auth, billing, chat, documents, grading, reports, rubrics, settings, students, system
+from .security import ensure_demo_users
+from .services.grading import default_rubric_items
 
-def _load_grade_details(details):
-    if not details:
-        return {}
-    if isinstance(details, dict):
-        return details
-    try:
-        return json.loads(details)
-    except Exception:
-        return {}
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+log = logging.getLogger("bahola")
 
 
-def _calculate_report_analytics(rows):
-    if not rows:
-        return {
-            "total_students": 0,
-            "average_score": 0.0,
-            "pass_rate": 0.0,
-            "quality_rate": 0.0,
-            "weak_topics": [],
-        }
-
-    scores = [float(r.get("total_score", 0)) for r in rows]
-    average_score = round(sum(scores) / len(scores), 2)
-    pass_rate = round((sum(1 for s in scores if s >= 60) / len(scores)) * 100, 2)
-    quality_rate = round((sum(1 for s in scores if s >= 80) / len(scores)) * 100, 2)
-
-    topic_map = {}
-    for row in rows:
-        for item in row.get("rubric", []):
-            if not isinstance(item, dict):
-                continue
-            name = item.get("name")
-            score = item.get("score")
-            max_score = item.get("max_score") or 1
-            if not name or score is None:
-                continue
-            bucket = topic_map.setdefault(name, {"sum": 0.0, "count": 0})
-            bucket["sum"] += float(score)
-            bucket["count"] += 1
-
-    weak_topics = []
-    for name, values in topic_map.items():
-        avg = values["sum"] / values["count"]
-        max_possible = 100
-        difficulty = max(0.0, round((1 - (avg / max_possible)) * 100, 2))
-        weak_topics.append({
-            "topic": name,
-            "average_score": round(avg, 2),
-            "difficulty": difficulty,
-        })
-    weak_topics.sort(key=lambda x: x["difficulty"], reverse=True)
-
-    return {
-        "total_students": len(rows),
-        "average_score": average_score,
-        "pass_rate": pass_rate,
-        "quality_rate": quality_rate,
-        "weak_topics": weak_topics[:5],
-    }
+def seed_default_rubric() -> None:
+    with Session(engine) as s:
+        if s.exec(select(RubricTemplate).limit(1)).first():
+            return
+        items = [i.model_dump(exclude={"score", "evidence"}) for i in default_rubric_items()]
+        s.add(RubricTemplate(name="Standart insho/referat rubrikasi", description="Dolzarblik, dalillar, tuzilma, til, xulosa (jami 100 ball)", items=dumps(items), is_default=True, created_by="system"))
+        s.add(RubricTemplate(name="Amaliy/dasturlash topshirig'i", course=None, description="Kod va amaliy yechimlar uchun", items=dumps([
+            {"name": "Topshiriqqa moslik", "max_score": 25, "description": "Talab qilingan funksionallik bajarilgan"},
+            {"name": "Algoritm va mantiq", "max_score": 30, "description": "Yechim to'g'ri va samarali"},
+            {"name": "Kod sifati va uslub", "max_score": 20, "description": "O'qilishi oson, nomlash, tuzilma"},
+            {"name": "Tushuntirish va izohlar", "max_score": 15, "description": "Yechim izohlangan"},
+            {"name": "Xulosa va natija", "max_score": 10, "description": "Natija tekshirilgan va umumlashtirilgan"},
+        ]), is_default=False, created_by="system"))
+        s.commit()
 
 
-app = FastAPI(title="AI Teacher Co-Pilot — Backend")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_db()
+    ensure_demo_users()
+    seed_default_rubric()
+    log.info("Baza tayyor: %s | LLM: %s", config.settings.database_url.split("@")[-1], config.settings.llm_provider)
+    yield
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+
+app = FastAPI(
+    title="AI O'qituvchi Hamkori — Backend",
+    version=config.settings.app_version,
+    description="Talaba ishlarini baholash, o'quv hujjatlarini yaratish, HEMIS/Excel eksport va analitika.",
+    lifespan=lifespan,
 )
 
-app.include_router(auth_router)
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
-if os.getenv("OPENAI_API_KEY"):
-    llm = OpenAIAdapter(api_key=os.getenv("OPENAI_API_KEY"))
-else:
-    llm = LLMAdapter()
+for r in (system.router, auth.router, grading.router, documents.router, reports.router, students.router, rubrics.router, billing.router, chat.router, settings.router):
+    app.include_router(r)
 
 
-@app.on_event("startup")
-def on_startup():
-    init_db()
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    log.exception("Kutilmagan xato: %s %s", request.method, request.url.path)
+    return JSONResponse(status_code=500, content={"detail": f"Ichki xato: {exc.__class__.__name__}"})
 
 
-@app.post("/api/grade", response_model=GradeResponse)
-async def grade_endpoint(text: str = Form(None), file: UploadFile = File(None)):
-    """Accept text or file upload and return structured grading JSON."""
-    content = text or ""
-    if file:
-        raw = await file.read()
-        try:
-            content = raw.decode('utf-8')
-        except Exception:
-            content = "(binary file content)"
-
-    # Example rubric — replace or accept from request in real system
-    rubric = [RubricItem(name="Dolzarblik", max_score=30), RubricItem(name="Dalillar", max_score=40), RubricItem(name="Xulosa", max_score=30)]
-
-    result = await llm.grade_submission(content, rubric)
-
-    # persist minimal record
-    with Session(engine) as s:
-        sub = Submission(student_id="unknown", course="unknown", content=content)
-        s.add(sub)
-        s.commit()
-        s.refresh(sub)
-        gr = GradeRecord(submission_id=sub.id, total_score=result["total_score"], details=json.dumps({"rubric": [r.dict() for r in result["rubric"]]}))
-        s.add(gr)
-        s.commit()
-        s.refresh(gr)
-
-        # record audit log for autogenerated grade
-        audit = AuditLog(action="grade_autogenerated", actor=None, target_id=gr.id, note=f"plagiarism={result.get('plagiarism_score')} ai={result.get('ai_likelihood')}")
-        s.add(audit)
-        s.commit()
-
-    # Convert rubric items to primitives
-    return GradeResponse(
-        total_score=result["total_score"],
-        rubric=[r for r in result["rubric"]],
-        plagiarism_score=result["plagiarism_score"],
-        ai_likelihood=result["ai_likelihood"],
-        feedback=result["feedback"],
-        grade_id=gr.id,
-        submission_id=sub.id,
-    )
-
-
-@app.post("/api/generate-docs", response_model=DocResponse)
-async def generate_docs(req: DocRequest):
-    out = await llm.generate_docs(req.course_name, hours=req.hours, weeks=req.weeks)
-    export_path = None
-    if req.export_format and req.export_format.lower() == "docx":
-        try:
-            export_path = write_syllabus_docx(req.course_name, out["syllabus"], out["exam_ticket"])
-        except Exception:
-            export_path = None
-    return DocResponse(syllabus=out["syllabus"], exam_ticket=out["exam_ticket"], export_path=export_path)
-
-
-@app.post("/api/reports", response_model=ReportResponse)
-async def reports(req: ReportRequest):
-    # Build analytic rows from DB and export to Excel
-    rows = []
-    with Session(engine) as s:
-        q = s.exec(select(GradeRecord))
-        for gr in q.all():
-            sub = s.get(Submission, gr.submission_id)
-            details = _load_grade_details(gr.details)
-            rows.append({
-                "grade_id": gr.id,
-                "submission_id": gr.submission_id,
-                "student_id": getattr(sub, 'student_id', None),
-                "course": getattr(sub, 'course', None) or req.course_name,
-                "total_score": gr.total_score,
-                "confirmed": bool(gr.confirmed),
-                "updated_at": gr.updated_at.isoformat() if gr.updated_at else None,
-                "rubric": details.get("rubric", []),
-            })
-    analytics = _calculate_report_analytics(rows)
-    excel_path = None
-    if rows:
-        try:
-            excel_path = write_grades_excel(rows, course_name=req.course_name or "grades", group_id=req.group_id)
-        except Exception:
-            excel_path = None
-    out = await llm.generate_report(req.course_name, group_id=req.group_id)
-    summary = out.get("summary") or (
-        f"Guruh: {req.group_id or 'Barcha'} — {req.course_name}: O'rtacha ball {analytics['average_score']}, "
-        f"o'tish foizi {analytics['pass_rate']}%"
-    )
-    if analytics["weak_topics"]:
-        weak = ", ".join(f"{w['topic']} ({w['average_score']})" for w in analytics["weak_topics"][:3])
-        summary = f"{summary}. Eng qiyin mavzular: {weak}."
-    return ReportResponse(summary=summary, excel_path=excel_path, analytics=analytics)
-
-
-@app.post("/api/detect", response_model=DetectResponse)
-async def detect_endpoint(req: DetectRequest):
-    out = analyze_text(req.text)
-    return DetectResponse(plagiarism_score=out["plagiarism_score"], ai_likelihood=out["ai_likelihood"], reasons=out["reasons"])
-
-
-@app.post("/api/grade/{grade_id}/confirm", response_model=ConfirmResponse)
-async def confirm_grade(grade_id: int, teacher_id: str = Form(None), current_user=Depends(get_current_active_user)):
-    with Session(engine) as s:
-        gr = s.get(GradeRecord, grade_id)
-        if not gr:
-            return ConfirmResponse(success=False, message="Grade record not found")
-        gr.confirmed = True
-        gr.teacher_id = teacher_id
-        s.add(gr)
-        s.commit()
-        audit = AuditLog(action="grade_confirmed", actor=teacher_id, target_id=gr.id, note="Teacher confirmed grade")
-        s.add(audit)
-        s.commit()
-        return ConfirmResponse(success=True, message="Confirmed")
-
-
-@app.post("/api/grade/{grade_id}/edit", response_model=ConfirmResponse)
-async def edit_grade(grade_id: int, payload: EditGradeRequest, current_user=Depends(get_current_active_user)):
-    with Session(engine) as s:
-        gr = s.get(GradeRecord, grade_id)
-        if not gr:
-            return ConfirmResponse(success=False, message="Grade record not found")
-        if payload.corrected_total is not None:
-            gr.total_score = payload.corrected_total
-        if payload.corrected_details:
-            gr.corrected_details = payload.corrected_details
-        gr.teacher_id = payload.teacher_id
-        s.add(gr)
-        s.commit()
-        audit = AuditLog(action="grade_edited", actor=payload.teacher_id, target_id=gr.id, note=payload.corrected_details)
-        s.add(audit)
-        s.commit()
-        return ConfirmResponse(success=True, message="Edited and logged")
-
-
-@app.get("/api/audit", response_model=List[AuditEntry])
-async def get_audit_logs(limit: int = 50, current_user=Depends(get_current_active_user)):
-    with Session(engine) as s:
-        q = s.exec(select(AuditLog).order_by(AuditLog.created_at.desc()).limit(limit))
-        rows = q.all()
-        out = []
-        for a in rows:
-            out.append(AuditEntry(action=a.action, actor=a.actor, target_id=a.target_id, note=a.note, created_at=a.created_at.isoformat()))
-        return out
-
-
-@app.get("/api/grades", response_model=List[dict])
-async def list_grades(limit: int = 100, current_user=Depends(get_current_active_user)):
-    # Return simple list of grade summaries
-    with Session(engine) as s:
-        q = s.exec(select(GradeRecord).order_by(GradeRecord.updated_at.desc()).limit(limit))
-        rows = q.all()
-        out = []
-        for gr in rows:
-            # fetch submission
-            sub = s.get(Submission, gr.submission_id)
-            out.append({
-                "grade_id": gr.id,
-                "submission_id": gr.submission_id,
-                "student_id": getattr(sub, 'student_id', None),
-                "course": getattr(sub, 'course', None),
-                "total_score": gr.total_score,
-                "confirmed": bool(gr.confirmed),
-                "updated_at": gr.updated_at.isoformat() if gr.updated_at else None,
-            })
-        return out
-
-
-@app.get("/api/grade/{grade_id}", response_model=GradeResponse)
-async def get_grade(grade_id: int):
-    with Session(engine) as s:
-        gr = s.get(GradeRecord, grade_id)
-        if not gr:
-            return None
-        sub = s.get(Submission, gr.submission_id)
-        details = {}
-        try:
-            details = json.loads(gr.details or "{}")
-        except Exception:
-            details = {}
-
-        rubric = []
-        for r in details.get('rubric', []):
-            try:
-                rubric.append(RubricItem(**r))
-            except Exception:
-                pass
-
-        return GradeResponse(
-            total_score=gr.total_score,
-            rubric=rubric,
-            plagiarism_score=None,
-            ai_likelihood=None,
-            feedback=Feedback(summary="(stored record)", suggestions=[]),
-            grade_id=gr.id,
-            submission_id=gr.submission_id,
-            confirmed=gr.confirmed,
-            updated_at=gr.updated_at.isoformat() if gr.updated_at else None,
-        )
+@app.get("/", include_in_schema=False)
+def root():
+    return {"app": config.settings.app_name, "version": config.settings.app_version, "docs": "/docs", "health": "/api/health"}

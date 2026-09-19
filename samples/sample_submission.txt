@@ -1,1 +1,7 @@
-Bu kichik namunaviy insho. Mavzu: Ta'lim va texnologiya. Ushbu matn misol uchun yozilgan va tizim baholash maqsadida ishlatiladi.
+Ta'lim va texnologiya mavzusi bugungi kunda ta'lim tizimida dolzarb masalalardan biridir. Ushbu ishning maqsadi — raqamli texnologiyalarning ta'lim sifatiga ta'sirini tahlil qilish.
+
+Birinchidan, 2023-yilgi tadqiqotlarga ko'ra onlayn platformalardan foydalanish talabalar o'zlashtirishini 18% oshirgan. Masalan, HEMIS tizimi orqali davomat va baholarni kuzatish shaffoflikni ta'minlaydi, chunki barcha ma'lumotlar bir joyda jamlanadi. Ikkinchidan, sun'iy intellekt vositalari o'qituvchining tekshirish vaqtini qisqartiradi, shuning uchun u metodik ishga ko'proq vaqt ajrata oladi.
+
+Bundan tashqari, UNESCO (2022) hisobotiga ko'ra raqamli savodxonlik XXI asrning asosiy kompetensiyalaridan biridir. Shu bilan birga, texnologiyalarga haddan tashqari bog'lanish tanqidiy fikrlashni susaytirishi mumkin.
+
+Xulosa qilib aytganda, texnologiya ta'limda kuchli vosita, ammo u pedagogik yondashuv bilan uyg'unlashgandagina samara beradi. Demak, o'qituvchilarni raqamli kompetensiyalar bo'yicha muntazam o'qitish tavsiya etiladi.

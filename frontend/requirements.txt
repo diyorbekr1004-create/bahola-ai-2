@@ -1,0 +1,5 @@
+# Faqat Streamlit frontend uchun (Streamlit Cloud yoki alohida konteyner)
+streamlit>=1.46,<2.0
+httpx>=0.27,<1.0
+pandas>=2.2,<3.0
+plotly>=5.24,<7.0

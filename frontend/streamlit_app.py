@@ -1,179 +1,114 @@
+"""AI O'qituvchi Hamkori — boshqaruv paneli (Streamlit).
+
+Ishga tushirish:  streamlit run frontend/streamlit_app.py
+Backend manzili:  BACKEND_URL muhit o'zgaruvchisi yoki yon paneldagi maydon.
+"""
+from __future__ import annotations
+
+import os
+import sys
+
 import streamlit as st
-import httpx
-import pandas as pd
 
-BACKEND = st.secrets.get("backend_url", "http://localhost:8000")
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-st.set_page_config(page_title="AI O'qituvchi Hamkori", layout="wide")
+from ui import api, backend_launcher, settings_panel, tab_billing, tab_chat, tab_documents, tab_grading, tab_reports, tab_students  # noqa: E402
 
-st.title("AI O'qituvchi Hamkori — Demo")
+st.set_page_config(page_title="AI O'qituvchi Hamkori", page_icon="🎓", layout="wide", initial_sidebar_state="expanded")
 
-# Simple auth: teacher login to obtain bearer token
-if "token" not in st.session_state:
-    st.session_state.token = None
+st.markdown(
+    """
+    <style>
+      .block-container {padding-top: 1.2rem;}
+      div[data-testid="stMetric"] {background: rgba(42,120,214,0.06); border: 1px solid rgba(42,120,214,0.15); border-radius: 10px; padding: 10px 14px;}
+      div[data-testid="stMetricLabel"] {color: #52514e;}
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
-with st.sidebar.expander("O'qituvchi login"):
-    username = st.text_input("Username", key="login_user")
-    password = st.text_input("Password", type="password", key="login_pass")
-    if st.button("Login", key="login_btn"):
-        try:
-            resp = httpx.post(f"{BACKEND}/auth/token", data={"username": username, "password": password}, timeout=10.0)
-            resp.raise_for_status()
-            token = resp.json().get("access_token")
-            st.session_state.token = token
-            st.success("Login muvaffaqiyatli")
-        except Exception as e:
-            st.error(f"Login xatolik: {e}")
-    if st.session_state.token:
-        st.write("Token: (saqlangan)")
-        if st.button("Logout", key="logout_btn"):
-            st.session_state.token = None
+for k, v in {"token": None, "username": None, "backend_url": api.default_backend_url()}.items():
+    st.session_state.setdefault(k, v)
 
+# ---------------------------------------------------------------- Sidebar
+with st.sidebar:
+    st.markdown("## 🎓 AI O'qituvchi Hamkori")
+    st.caption("Tekshirish · Hujjatlar · Hisobotlar — bir joyda")
+    st.session_state["backend_url"] = st.text_input("Backend URL", value=st.session_state["backend_url"])
+    with st.spinner("Backend tekshirilmoqda…"):
+        ok, state, h = backend_launcher.ensure_backend()
+    if ok:
+        st.success(f"Backend: {h['status']} · v{h['version']} · LLM: **{h['provider']}**" + (f" · avtomatik ishga tushirildi ({st.session_state['backend_url']})" if state == "started" else ""))
+    else:
+        if state == "remote":
+            st.error("Backend javob bermayapti. Manzilni tekshiring yoki serverni ishga tushiring.")
+        else:
+            st.error("Backend ishga tushmadi. Quyidagi logni ko'ring; qo'lda: `cd backend && uvicorn app.main:app`")
+            log = backend_launcher.tail_log()
+            if log:
+                st.code(log, language="text")
+            if st.button("🔄 Qayta urinish", key="backend_retry"):
+                backend_launcher.restart()
+                st.rerun()
+    settings_panel.render()
 
-def auth_headers():
-    h = {}
-    if st.session_state.get("token"):
-        h["Authorization"] = f"Bearer {st.session_state.token}"
-    return h
-
-tab = st.tabs(["Tekshirish", "Hujjatlar", "Hisobotlar"])
-
-with tab[0]:
-    st.header("Tekshirish: Talaba ishini yuklang yoki yozing")
-    uploaded = st.file_uploader("Matn yoki fayl yuklang", type=["txt", "docx"])
-    text = st.text_area("Yoki bu yerga matnni joylang")
-    st.markdown("---")
-    st.subheader("Saqlangan baholar")
-    if st.button("Baholar ro'yxatini yuklash"):
-        try:
-            resp = httpx.get(f"{BACKEND}/api/grades", timeout=10.0, headers=auth_headers())
-            resp.raise_for_status()
-            grades = resp.json()
-            if grades:
-                options = {f"ID {g['grade_id']} — {g['course'] or ''} — {g['total_score']}": g['grade_id'] for g in grades}
-                sel = st.selectbox("Bahoni tanlang", options=list(options.keys()))
-                gid = options[sel]
-                # load selected grade
-                resp2 = httpx.get(f"{BACKEND}/api/grade/{gid}", timeout=10.0, headers=auth_headers())
-                resp2.raise_for_status()
-                gdet = resp2.json()
-                st.write("Grade details:")
-                st.json(gdet)
-                st.info(f"Tasdiqlangan: {gdet.get('confirmed')} | Yangilangan: {gdet.get('updated_at')}")
-            else:
-                st.info("Hech qanday saqlangan baho topilmadi.")
-        except Exception as e:
-            st.error(f"Baholarni yuklashda xatolik: {e}")
-    if st.button("Baholash"):
-        with st.spinner("Yaratilmoqda..."):
-            files = {}
-            form = {"text": text}
-            if uploaded:
-                files["file"] = (uploaded.name, uploaded.getvalue())
-            try:
-                resp = httpx.post(f"{BACKEND}/api/grade", data=form, files=files, timeout=30.0)
-                resp.raise_for_status()
-                data = resp.json()
-                st.success(f"Total score: {data['total_score']}")
-                st.json(data)
-
-                # Run detection on the text as well
+    st.markdown("### 👤 O'qituvchi")
+    if st.session_state["token"]:
+        st.write(f"Kirgan: **{st.session_state['username']}**")
+        if st.button("Chiqish", width="stretch"):
+            st.session_state["token"] = None
+            st.session_state["username"] = None
+            api.invalidate()
+            st.rerun()
+    else:
+        with st.form("login"):
+            u = st.text_input("Login", value="teacher")
+            p = st.text_input("Parol", type="password", value="teacher123")
+            if st.form_submit_button("Kirish", width="stretch"):
                 try:
-                    det = httpx.post(f"{BACKEND}/api/detect", json={"text": text}, timeout=10.0, headers=auth_headers())
-                    det.raise_for_status()
-                    ddata = det.json()
-                    st.info(f"Plagiarism: {ddata['plagiarism_score']} | AI-likelihood: {ddata['ai_likelihood']}")
-                    st.write("Reasons:")
-                    for r in ddata.get('reasons', []):
-                        st.write(f"- {r}")
-                except Exception:
-                    pass
+                    res = api.post("/auth/token", data={"username": u, "password": p})
+                    st.session_state["token"] = res["access_token"]
+                    st.session_state["username"] = res["user"]["username"]
+                    api.invalidate()
+                    st.rerun()
+                except api.APIError as exc:
+                    st.error(str(exc))
+        st.caption("Demo: teacher/teacher123 · admin/admin123 · dekan/dekan123")
 
-                # Teacher actions: confirm or edit (use real grade_id if returned)
-                grade_id = data.get('grade_id')
-                if not grade_id:
-                    st.warning("No grade_id returned by backend — confirm/edit will use record 1 (dev).")
-                    grade_id = 1
+    try:
+        sub = api.get("/api/subscription")
+        u = sub["usage"]
+        limit_txt = f"{u['grades_used']} / {u['grades_limit']} ish (shu oy)" if u.get("grades_limit") else f"{u['grades_used']} ish (cheksiz)"
+        st.info(f"Tarif: **{sub['plan_title']}** · {limit_txt}")
+    except api.APIError:
+        pass
 
-                cols = st.columns(2)
-                with cols[0]:
-                    teacher = st.text_input("Teacher ID for confirm", value="teacher_1", key=f"confirm_teacher_{grade_id}")
-                    if st.button("Tasdiqlash", key=f"confirm_{grade_id}"):
-                        try:
-                            resp2 = httpx.post(f"{BACKEND}/api/grade/{grade_id}/confirm", data={"teacher_id": teacher}, timeout=10.0, headers=auth_headers())
-                            resp2.raise_for_status()
-                            st.success("Confirmed")
-                        except Exception as e:
-                            st.error(f"Confirm failed: {e}")
-
-                with cols[1]:
-                    corrected = st.text_area("To'g'irlangan tafsilotlar", key=f"corrected_{grade_id}")
-                    corrected_total = st.number_input("To'g'irlangan jami ball", value=data.get('total_score', 0), key=f"corrected_total_{grade_id}")
-                    teacher2 = st.text_input("Teacher ID for edit", value="teacher_1_edit", key=f"edit_teacher_{grade_id}")
-                    if st.button("Yuborish (Edit)", key=f"edit_{grade_id}"):
-                        try:
-                            payload = {"teacher_id": teacher2, "corrected_details": corrected, "corrected_total": int(corrected_total)}
-                            resp3 = httpx.post(f"{BACKEND}/api/grade/{grade_id}/edit", json=payload, timeout=10.0, headers=auth_headers())
-                            resp3.raise_for_status()
-                            st.success("Edit logged")
-                        except Exception as e:
-                            st.error(f"Edit failed: {e}")
-            except Exception as e:
-                st.error(f"Xatolik: {e}")
-
-with tab[1]:
-    st.header("Hujjatlar generatori")
-    course = st.text_input("Fan nomi", "Matematika")
-    hours = st.number_input("Soatlar (jami)", value=60)
-    weeks = st.number_input("Haftalar", value=15)
-    if st.button("Generatsiya"):
-        try:
-            resp = httpx.post(f"{BACKEND}/api/generate-docs", json={"course_name": course, "hours": int(hours), "weeks": int(weeks)}, headers=auth_headers())
-            resp.raise_for_status()
-            d = resp.json()
-            st.subheader("Silabus")
-            st.text_area("", value=d["syllabus"], height=300)
-            st.subheader("Imtihon bileti")
-            st.text_area("", value=d["exam_ticket"], height=200)
-        except Exception as e:
-            st.error(f"Xatolik: {e}")
-
-with tab[2]:
-    st.header("Hisobotlar")
-    course = st.text_input("Report uchun fan nomi", "Matematika - Guruh A")
-    gid = st.text_input("Guruh ID (ixtiyoriy)")
-    if st.button("Yaratish"):
-        try:
-            resp = httpx.post(f"{BACKEND}/api/reports", json={"course_name": course, "group_id": gid}, headers=auth_headers())
-            resp.raise_for_status()
-            d = resp.json()
-            analytics = d.get("analytics") or {}
-            st.success(d.get("summary"))
-            if analytics:
-                c1, c2, c3 = st.columns(3)
-                c1.metric("O'rtacha ball", f"{analytics.get('average_score', 0):.2f}")
-                c2.metric("O'tish foizi", f"{analytics.get('pass_rate', 0):.2f}%")
-                c3.metric("Sifat ko'rsatkichi", f"{analytics.get('quality_rate', 0):.2f}%")
-                weak = analytics.get("weak_topics") or []
-                if weak:
-                    st.subheader("Eng qiyin mavzular")
-                    for item in weak:
-                        st.write(f"- {item.get('topic')}: o'rtacha {item.get('average_score')} | qiyinchilik {item.get('difficulty')}%")
-            if d.get("excel_path"):
-                st.markdown(f"Eksport fayli: {d.get('excel_path')}")
-        except Exception as e:
-            st.error(f"Xatolik: {e}")
+    try:
+        s = api.get("/api/stats")
+        st.markdown("### 📌 Holat")
+        st.metric("Baholangan ishlar", s["total_grades"], f"{s['pending']} tasdiqlanmagan")
+        st.metric("Tejalgan vaqt", f"{s['time_saved_hours']} soat")
+        st.caption(f"Talabalar: {s['students']} · Guruhlar: {s['groups']} · Hujjatlar: {s['documents']}")
+    except api.APIError:
+        pass
 
     st.markdown("---")
-    if st.button("Audit logni ko'rsatish"):
-        try:
-            resp = httpx.get(f"{BACKEND}/api/audit", timeout=10.0, headers=auth_headers())
-            resp.raise_for_status()
-            logs = resp.json()
-            if logs:
-                df = pd.DataFrame(logs)
-                st.table(df)
-            else:
-                st.info("Hech qanday audit topilmadi.")
-        except Exception as e:
-            st.error(f"Audit olishda xatolik: {e}")
+    st.caption("Demo ma'lumot uchun: `python scripts/seed.py`")
+
+# ---------------------------------------------------------------- Tabs
+st.title("AI O'qituvchi Hamkori")
+st.caption("Talaba ishlarini AI bilan tekshiring, o'zingiz tasdiqlang, HEMIS uchun eksport qiling — haftalik 15–20 soat o'rniga 1–2 soat.")
+
+tabs = st.tabs(["🔎 Tekshirish", "📄 Hujjatlar", "📊 Hisobotlar", "👥 Talabalar", "💳 Tariflar", "💬 Yordamchi"])
+with tabs[0]:
+    tab_grading.render()
+with tabs[1]:
+    tab_documents.render()
+with tabs[2]:
+    tab_reports.render()
+with tabs[3]:
+    tab_students.render()
+with tabs[4]:
+    tab_billing.render()
+with tabs[5]:
+    tab_chat.render()

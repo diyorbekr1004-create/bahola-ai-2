@@ -1,0 +1,20 @@
+# Qator oxirlari: shell skriptlar va .env har doim LF (Windows'da Git Bash uchun), PowerShell CRLF
+* text=auto
+*.sh text eol=lf
+*.py text eol=lf
+*.toml text eol=lf
+*.yml text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+Makefile text eol=lf
+.env.example text eol=lf
+.python-version text eol=lf
+*.ps1 text eol=crlf
+
+# Ikkilik fayllar
+*.png binary
+*.jpg binary
+*.docx binary
+*.xlsx binary
+*.pdf binary
+*.db binary
