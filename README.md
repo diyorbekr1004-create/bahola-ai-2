@@ -16,10 +16,26 @@ O'qituvchining haftalik 15–20 soatlik tekshirish va qog'oz to'ldirish vaqtini 
 
 Barcha natijalar **yagona bazada** (SQLite default, PostgreSQL bir qatorda) saqlanadi. LLM ulanmagan bo'lsa ham tizim **to'liq oflayn** ishlaydi (deterministik evristik baholash); `OPENAI_API_KEY` berilsa OpenAI (yoki OpenAI-ga mos har qanday server: Groq, OpenRouter, Ollama) ishlatiladi va xato bo'lsa avtomatik oflayn rejimga qaytadi.
 
-## Tez boshlash (3 buyruq)
+## Tez boshlash
+
+**Talab:** Python 3.11 – 3.14 (tavsiya: **3.12**). Boshqa hech narsa kerak emas — barcha paketlar tayyor wheel bilan o'rnatiladi.
+
+Bitta buyruq bilan (venv + paketlar + demo ma'lumot + testlar):
+
+```powershell
+# Windows (PowerShell, loyiha ildizidan)
+powershell -ExecutionPolicy Bypass -File scripts\setup.ps1
+```
 
 ```bash
-python -m venv .venv && . .venv/bin/activate          # Windows: .venv\Scripts\activate
+# Linux / macOS
+bash scripts/setup.sh
+```
+
+Yoki qo'lda:
+
+```bash
+py -3.12 -m venv .venv && .venv\Scripts\activate       # Linux/macOS: python3.12 -m venv .venv && . .venv/bin/activate
 pip install -r backend/requirements.txt
 python scripts/seed.py --reset                        # 30 talaba, 110 baholangan ish, 1 hujjatlar to'plami
 ```
@@ -96,6 +112,17 @@ docs/                        PRESENTATION.md, HEMIS_EXPORT.md, API.md, DEPLOYMEN
 cd backend && pytest -q        # 39 passed
 python -m pyflakes backend/app frontend scripts
 ```
+
+## Muammolar va yechimlar (dev environment)
+
+| Belgi | Sabab | Yechim |
+|---|---|---|
+| `Could not find vswhere.exe` / pandas build xatosi | Eski `requirements.txt` dagi qat'iy pin (`pandas==2.2.2`) yangi Python uchun wheel'siz edi, pip manbadan qurishga urindi | Joriy `backend/requirements.txt` dan o'rnating (diapazonlar), Python 3.12 tavsiya etiladi |
+| `conflicting dependencies` (`sqlmodel 0.0.8`, `pydantic`, `fastapi 0.100`) | Eski pinlar Pydantic v1/v2 aralashgan | Joriy fayl Pydantic v2 + SQLModel 0.0.22+ ga mos, konflikt yo'q |
+| `No matching distribution found for python-docx==0.8.12` / `passlib==1.8.2` | Mavjud bo'lmagan/eskirgan pinlar | Joriy faylda `python-docx>=1.1`, `passlib` umuman ishlatilmaydi (stdlib PBKDF2 + PyJWT) |
+| `No module named pytest` | O'rnatish yarmida to'xtagan | `pip install -r backend/requirements.txt` ni qayta bajaring, keyin `cd backend && pytest -q` |
+| Eski `.venv` ichida chalkash paketlar | Bir nechta o'rnatish urinishi | `.venv` papkasini o'chirib `scripts\setup.ps1` ni qayta ishga tushiring |
+| `streamlit` ochilmayapti, «Backend ishlamayapti» | Backend alohida jarayonda ishga tushmagan | Avval `cd backend && uvicorn app.main:app --reload`, keyin Streamlit; yoki `scripts\run_dev.ps1` |
 
 ## Hujjatlar
 

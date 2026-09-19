@@ -1,3 +1,7 @@
+# Python 3.11 - 3.14 (tavsiya: 3.12). Barcha paketlar Windows/Linux/macOS uchun tayyor wheel bilan keladi,
+# C++ build toolchain (Visual Studio / vswhere.exe) KERAK EMAS. Aniq pin o'rniga mos diapazonlar ishlatilgan.
+# O'rnatish: pip install -r backend/requirements.txt   (yoki scripts/setup.ps1 / scripts/setup.sh)
+
 # --- Backend (FastAPI) ---
 fastapi>=0.115,<1.0
 uvicorn[standard]>=0.30,<1.0
